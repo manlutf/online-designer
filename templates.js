@@ -14,7 +14,8 @@ const PALETTES = [
   { name: 'باستيل ناعم',    dark: '#4a044e', accent: '#f472b6', bg: '#fdf2f8', light: '#fce7f3', text: '#4a044e', sub: '#86198f', fontAr: 'Tajawal', fontEn: 'Poppins' },
 ];
 
-const S = {
+// Default sample content. S is mutated by the customer form in app.js; templates rebuild from it.
+const DEFAULTS = {
   company: 'شركة الأفق للتقنية', companyEn: 'HORIZON TECH', slogan: 'نصنع المستقبل معاً',
   name: 'محمد العلي', title: 'المدير التنفيذي',
   phone: '+966 55 123 4567', email: 'info@horizon.sa', web: 'www.horizon.sa', address: 'الرياض، حي العليا، شارع التحلية',
@@ -32,7 +33,29 @@ const S = {
   thanks: 'شكراً لك', thanksBody: 'نقدّر ثقتك بنا ونتطلع لخدمتك مجدداً. استخدم الكود THANKS10 لخصم 10% على طلبك القادم.',
   mug: 'صباح الإنجاز', tshirt: 'فريق الأفق', letterSubject: 'الموضوع: عرض سعر',
   letterBody: 'السادة / شركة النور للتجارة            المحترمين\n\nتحية طيبة وبعد،\n\nيسرّنا أن نقدّم لكم عرض السعر المرفق لتوريد وتركيب الأنظمة المطلوبة وفق المواصفات المتفق عليها.\n\nوتفضلوا بقبول فائق الاحترام،',
+  logoImg: null, photoImg: null,   // HTMLImageElement set by the form (logo / photo uploads)
 };
+const S = Object.assign({}, DEFAULTS);
+
+// Which fields the simple form shows per product family (key → label). Order matters.
+const FORM_FIELDS = {
+  card:        [['company', 'اسم الشركة'], ['slogan', 'الشعار النصي'], ['name', 'الاسم'], ['title', 'المسمى الوظيفي'], ['phone', 'الجوال'], ['email', 'الإيميل'], ['web', 'الموقع'], ['address', 'العنوان']],
+  badge:       [['company', 'اسم الشركة'], ['name', 'الاسم'], ['role', 'المسمى الوظيفي'], ['dept', 'القسم'], ['idno', 'رقم البطاقة']],
+  poster:      [['company', 'اسم الشركة'], ['slogan', 'الشعار النصي'], ['headline', 'العنوان الرئيسي'], ['sub', 'العنوان الفرعي'], ['body', 'نص قصير'], ['cta', 'زر الدعوة'], ['date', 'التاريخ / المدة'], ['phone', 'الجوال'], ['email', 'الإيميل'], ['web', 'الموقع'], ['address', 'العنوان']],
+  rollup:      [['company', 'اسم الشركة'], ['headline', 'العنوان الرئيسي'], ['sub', 'العنوان الفرعي'], ['body', 'نص قصير'], ['cta', 'زر الدعوة'], ['phone', 'الجوال'], ['web', 'الموقع']],
+  brochure:    [['company', 'اسم الشركة'], ['slogan', 'الشعار النصي'], ['body', 'من نحن'], ['phone', 'الجوال'], ['email', 'الإيميل'], ['web', 'الموقع'], ['address', 'العنوان']],
+  letterhead:  [['company', 'اسم الشركة'], ['companyEn', 'الاسم بالإنجليزي'], ['slogan', 'الشعار النصي'], ['letterSubject', 'موضوع الخطاب'], ['letterBody', 'نص الخطاب'], ['phone', 'الجوال'], ['email', 'الإيميل'], ['web', 'الموقع'], ['address', 'العنوان']],
+  menu:        [['company', 'اسم المطعم'], ['menuTitle', 'عنوان القائمة'], ['phone', 'الجوال'], ['web', 'الموقع'], ['address', 'العنوان']],
+  invitation:  [['inviteTitle', 'نوع المناسبة'], ['couple', 'الأسماء'], ['inviteLine', 'نص الدعوة'], ['eventDate', 'التاريخ'], ['eventTime', 'الوقت'], ['eventPlace', 'المكان'], ['company', 'اسم الجهة (للمناسبات الرسمية)']],
+  certificate: [['company', 'اسم الجهة'], ['cert', 'عنوان الشهادة'], ['name', 'اسم المكرَّم'], ['certFor', 'سبب التكريم'], ['signer', 'التوقيع الأول'], ['signer2', 'التوقيع الثاني']],
+  voucher:     [['company', 'اسم الشركة'], ['voucher', 'عنوان القسيمة'], ['amount', 'القيمة'], ['voucherNote', 'الشروط'], ['code', 'الكود']],
+  postcard:    [['company', 'اسم الشركة'], ['thanks', 'العنوان'], ['thanksBody', 'الرسالة'], ['web', 'الموقع'], ['address', 'العنوان']],
+  sticker:     [['company', 'اسم الشركة'], ['slogan', 'الشعار النصي'], ['web', 'الموقع']],
+  mug:         [['mug', 'النص على الكوب'], ['company', 'اسم الشركة'], ['slogan', 'الشعار النصي']],
+  tshirt:      [['tshirt', 'النص على التيشيرت'], ['company', 'اسم الشركة'], ['slogan', 'الشعار النصي'], ['web', 'الموقع']],
+};
+const LONG_FIELDS = ['body', 'letterBody', 'thanksBody', 'certFor', 'inviteLine', 'voucherNote'];
+
 
 // ---------- drawing kit ----------
 // fabric measures Arabic per glyph (no shaping), so check the shaped width with a real 2D context too.
@@ -67,11 +90,19 @@ function kit(W, H, b, p) {
     poly(pts, fill, o = {}) { return new fabric.Polygon(pts.map(([x, y]) => ({ x: X(x), y: Y(y) })), { fill, ...o }); },
     frame(x, y, w, h, stroke, t, o = {}) { return new fabric.Rect({ left: X(x), top: Y(y), width: X(w), height: Y(h), fill: 'transparent', stroke, strokeWidth: t * u, ...o }); },
     img(x, y, w, h, o = {}) {   // photo placeholder; app.js swaps it for an uploaded image
+      if (S.photoImg) {   // cover-crop the customer's photo into the frame
+        const el = S.photoImg, bw = X(w), bh = Y(h), sc = Math.max(bw / el.width, bh / el.height), cw = bw / sc, ch = bh / sc;
+        return new fabric.Image(el, { left: X(x), top: Y(y), cropX: (el.width - cw) / 2, cropY: (el.height - ch) / 2, width: cw, height: ch, scaleX: sc, scaleY: sc, data: { photo: true } });
+      }
       const r = new fabric.Rect({ left: 0, top: 0, width: X(w), height: Y(h), fill: o.fill || p.light, rx: (o.rx || 0) * u, ry: (o.rx || 0) * u });
       const t = new fabric.Textbox('📷 صورتك هنا', { left: 0, top: Y(h) / 2 - 2.2 * u, width: X(w), fontSize: Math.min(3.2 * u, X(w) / 9), fontFamily: 'Cairo', fill: o.textFill || p.sub, textAlign: 'center', direction: 'rtl' });
       return new fabric.Group([r, t], { left: X(x), top: Y(y), data: { placeholder: true } });
     },
     logo(cx, cy, r, fill, letter = 'A', textFill = '#fff') {
+      if (S.logoImg) {   // customer logo, contained in the same box the letter-mark used
+        const el = S.logoImg, box = 2 * r * u, sc = Math.min(box / el.width, box / el.height);
+        return [new fabric.Image(el, { left: X(cx) - el.width * sc / 2, top: Y(cy) - el.height * sc / 2, scaleX: sc, scaleY: sc, data: { logo: true } })];
+      }
       return [k.circle(cx, cy, r, fill), new fabric.Textbox(letter, { left: X(cx) - r * u, top: Y(cy) - r * u * 0.72, width: 2 * r * u, fontSize: r * u * 1.2, fontFamily: p.fontEn, fontWeight: 700, fill: textFill, textAlign: 'center' })];
     },
     contacts(x, y, w, s, fill, o = {}) { return k.en(S.phone + '\n' + S.email + '\n' + S.web, { x, y, w, s, fill, lh: 1.5, ...o }); },
@@ -1081,11 +1112,21 @@ FAMILIES.tshirt.push(
   ] }; } },
 );
 
+// Auto-generated back side for two-sided products: logo / company centred on the dark colour.
+function buildBack(W, H, b, p) {
+  const k = kit(W, H, b, p);
+  const objs = S.logoImg ? k.logo(50, 42, Math.min(W, H) >= H ? 16 : 12, p.accent, 'H') : [k.txt(S.company, { x: 10, y: 36, w: 80, s: 9, weight: 900, fill: '#fff', align: 'center' })];
+  if (!S.logoImg) objs.push(k.hline(42, 52, 16, 0.8, p.accent));
+  objs.push(k.txt(S.slogan, { x: 10, y: S.logoImg ? 66 : 56, w: 80, s: 4.2, fill: p.accent, align: 'center' }));
+  objs.push(k.en(S.web, { x: 10, y: 84, w: 80, s: 3.4, fill: '#ffffffaa', align: 'center' }));
+  return { bg: p.dark, objects: objs };
+}
+
 function templatesFor(prod) {
   const fam = FAMILIES[prod.family] || FAMILIES.card;
   const out = [];
   fam.forEach(l => PALETTES.forEach(p => out.push({
-    id: l.name + '|' + p.name, name: l.name, palette: p.name, swatch: [p.dark, p.accent],
+    id: l.name + '|' + p.name, name: l.name, palette: p.name, paletteObj: p, swatch: [p.dark, p.accent],
     build: (W, H, b) => l.fn(kit(W, H, b, p)),
   })));
   return out;

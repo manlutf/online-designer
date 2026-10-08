@@ -86,6 +86,77 @@ async function renderCatalog() {
   }
 }
 
+// ---------- simple mode: one form drives every template ----------
+let simpleMode = true, currentTpl = null, backManual = false, rebuildTimer = null, galleryTimer = null;
+const fileToImage = file => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = r.result; }; r.readAsDataURL(file); });
+const urlToImage = url => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = rej; im.src = url; });
+
+// customer data survives navigation between products (text fields only; images stay in the session)
+try { Object.assign(S, JSON.parse(localStorage.getItem('designer_data') || '{}')); } catch (e) {}
+const persistData = () => { try { const o = {}; Object.keys(DEFAULTS).forEach(k => { if (typeof S[k] === 'string') o[k] = S[k]; }); localStorage.setItem('designer_data', JSON.stringify(o)); } catch (e) {} };
+function renderForm(root, onChange) {
+  const fields = FORM_FIELDS[P.family] || FORM_FIELDS.card;
+  root.innerHTML = '';
+  fields.forEach(([key, label]) => {
+    const wrap = document.createElement('label'); wrap.className = 'field';
+    const long = LONG_FIELDS.includes(key);
+    wrap.innerHTML = `<span>${label}</span>` + (long ? `<textarea rows="3" data-key="${key}"></textarea>` : `<input type="text" data-key="${key}">`);
+    const inp = wrap.querySelector('[data-key]'); inp.value = S[key] || '';
+    inp.oninput = () => { S[key] = inp.value; persistData(); onChange(); };
+    root.appendChild(wrap);
+  });
+  // logo + photo
+  const media = document.createElement('div'); media.className = 'media-row';
+  media.innerHTML = `<label class="btn"><svg class="i"><use href="#i-image"/></svg> ${S.logoImg ? 'تغيير الشعار' : 'رفع الشعار'}<input type="file" accept="image/*" data-media="logoImg" class="hidden"></label>
+    <label class="btn"><svg class="i"><use href="#i-image"/></svg> ${S.photoImg ? 'تغيير الصورة' : 'رفع صورة'}<input type="file" accept="image/*" data-media="photoImg" class="hidden"></label>`;
+  media.querySelectorAll('input[type=file]').forEach(inp => inp.onchange = async e => { const f = e.target.files[0]; if (!f) return; S[inp.dataset.media] = await fileToImage(f); e.target.value = ''; syncForms(); onChange(); });
+  const reset = document.createElement('button'); reset.className = 'btn ghost'; reset.type = 'button'; reset.textContent = 'إعادة البيانات الافتراضية';
+  reset.onclick = () => { Object.keys(DEFAULTS).forEach(k => { S[k] = DEFAULTS[k]; }); persistData(); syncForms(); renderForm(root, onChange); onChange(); };
+  media.appendChild(reset);
+  root.appendChild(media);
+}
+function syncForms() {   // keep both forms (gallery + editor) showing the same values
+  document.querySelectorAll('[data-key]').forEach(i => { if (i.value !== (S[i.dataset.key] || '')) i.value = S[i.dataset.key] || ''; });
+}
+function buildInto(tpl) {
+  loading = true; canvas.clear(); canvas.backgroundColor = '#fff';
+  const { bg, objects } = tpl.build(W, H, B); canvas.backgroundColor = bg; canvas.add(...objects);
+  canvas.forEachObject(o => { o.selectable = !simpleMode; o.evented = !simpleMode; });
+  canvas.renderAll(); loading = false;
+}
+function rebuild() {   // simple mode: regenerate the current side(s) from S
+  if (!simpleMode || !currentTpl) return;
+  if (side !== 0) { sides[side] = snapshot(); }
+  const cur = side;
+  if (P.sides > 1 && !backManual) { side = 1; buildInto({ build: (w, h, b) => buildBack(w, h, b, currentTpl.paletteObj) }); sides[1] = snapshot(); }
+  side = 0; buildInto(currentTpl); sides[0] = snapshot();
+  if (cur !== 0) { side = cur; loadJSON(sides[cur]); }
+  renderSideButtons(); history = []; pushHistory();
+}
+const scheduleRebuild = () => { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(rebuild, 120); };
+function renderPaletteChips() {
+  const root = $('f-palettes'); root.innerHTML = '';
+  if (!currentTpl) return;
+  PALETTES.forEach(p => {
+    const c = document.createElement('button'); c.className = 'chip' + (p.name === currentTpl.palette ? ' on' : ''); c.title = p.name;
+    c.innerHTML = `<i style="background:${p.accent}"></i><i style="background:${p.dark}"></i>`;
+    c.onclick = () => { const t = TEMPLATES.find(x => x.name === currentTpl.name && x.palette === p.name); if (t) { currentTpl = t; $('t-name').textContent = P.name + ' — ' + t.name; renderPaletteChips(); rebuild(); } };
+    root.appendChild(c);
+  });
+}
+function setMode(simple) {
+  simpleMode = simple;
+  $('form-panel').classList.toggle('hidden', !simple);
+  $('p-none').classList.toggle('hidden', simple || !!canvas.getActiveObject());
+  if (simple) $('p-obj').classList.add('hidden');
+  document.querySelectorAll('.rail .adv').forEach(b => b.classList.toggle('hidden', simple));
+  $('a-advanced').classList.toggle('hidden', !simple);
+  $('a-simple').classList.toggle('hidden', simple || !currentTpl);
+  canvas.selection = !simple;
+  canvas.forEachObject(o => { o.selectable = !simple; o.evented = !simple; });
+  canvas.discardActiveObject(); canvas.renderAll();
+}
+
 // ---------- gallery ----------
 let TEMPLATES = [], paletteFilter = null, styleFilter = null;
 Object.entries(PRODUCTS).forEach(([k, v]) => $('g-product').add(new Option(v.icon + ' ' + v.name, k, false, k === productKey)));
@@ -106,6 +177,7 @@ async function renderMine() {
 
 async function renderGallery() {
   await fontsReady();
+  if (!$('g-form').children.length) renderForm($('g-form'), () => { clearTimeout(galleryTimer); galleryTimer = setTimeout(() => renderGallery(), 400); });
   TEMPLATES = templatesFor(P);
   $('g-title').textContent = P.name;
   $('g-count').textContent = `${TEMPLATES.length} قالباً · ${P.w}×${P.h} مم`;
@@ -161,7 +233,7 @@ function initCanvas() {
     if (P.folds) { ctx.strokeStyle = '#9ca3af'; for (let i = 1; i < P.folds; i++) { const x = W * i / P.folds * z; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H * z); ctx.stroke(); } }
     ctx.restore();
   });
-  ['object:added', 'object:modified', 'object:removed'].forEach(ev => canvas.on(ev, pushHistory));
+  ['object:added', 'object:modified', 'object:removed'].forEach(ev => canvas.on(ev, () => { pushHistory(); if (!loading && !simpleMode && side === 1) backManual = true; }));
   ['selection:created', 'selection:updated', 'selection:cleared'].forEach(ev => canvas.on(ev, syncProps));
   new ResizeObserver(fit).observe(document.querySelector('.stage'));
 }
@@ -171,7 +243,7 @@ function fit() {
   const z = Math.min((st.clientWidth - 56) / W, (st.clientHeight - 56) / H, 3);
   if (!(z > 0)) return;
   canvas.setZoom(z); canvas.setDimensions({ width: W * z, height: H * z });
-  $('t-zoom').textContent = Math.round(z / MM * 3.78 * 100) + '%';   // 100% = real print size on a 96dpi screen
+  $('t-zoom').textContent = Math.round(z * MM / 3.78 * 100) + '%';   // 100% = real print size on a 96dpi screen (3.78 px/mm)
 }
 
 async function openEditor(tpl) {
@@ -182,12 +254,16 @@ async function openEditor(tpl) {
   $('t-size').textContent = `${P.w}×${P.h} مم + ${P.bleed} مم bleed`;
   $('legend-fold').classList.toggle('hidden', !P.folds);
   sides = Array.from({ length: P.sides }, () => null);
-  side = 0; history = []; redoStack = [];
-  loading = true; canvas.clear(); canvas.backgroundColor = '#fff';
-  if (tpl) { const { bg, objects } = tpl.build(W, H, B); canvas.backgroundColor = bg; canvas.add(...objects); }
-  canvas.renderAll(); loading = false; pushHistory();
+  side = 0; history = []; redoStack = []; backManual = false; currentTpl = tpl;
+  loading = true; canvas.clear(); canvas.backgroundColor = '#fff'; canvas.renderAll(); loading = false;
+  if (!$('f-fields').children.length) renderForm($('f-fields'), scheduleRebuild);
+  syncForms(); renderPaletteChips();
+  setMode(!!tpl);
+  if (tpl) rebuild(); else pushHistory();
   renderSideButtons(); fit();
 }
+$('a-advanced').onclick = () => setMode(false);
+$('a-simple').onclick = () => { if (confirm('الرجوع للوضع البسيط يعيد بناء التصميم من بياناتك ويلغي التعديلات اليدوية. متابعة؟')) { backManual = false; setMode(true); rebuild(); } };
 
 function renderSideButtons() {
   const el = $('t-sides'); el.innerHTML = '';
@@ -229,7 +305,7 @@ $('a-text').onclick = () => centerAdd(new fabric.Textbox('نص جديد', { font
 $('a-rect').onclick = () => centerAdd(new fabric.Rect({ width: W * 0.3, height: H * 0.3, fill: '#4f46e5' }));
 $('a-circle').onclick = () => centerAdd(new fabric.Circle({ radius: 15 * U, fill: '#c9a227' }));
 $('a-line').onclick = () => centerAdd(new fabric.Rect({ width: W * 0.3, height: 0.8 * U, fill: '#111' }));
-$('a-image').onclick = () => $('a-file').click();
+$('a-image').onclick = () => { if (simpleMode && currentTpl) $('f-fields').querySelector('[data-media=logoImg]').click(); else $('a-file').click(); };
 $('a-file').onchange = e => { const f = e.target.files[0]; if (f) addImage(URL.createObjectURL(f)); e.target.value = ''; };
 $('a-bg').onclick = () => { $('a-bgcolor').value = toHex(canvas.backgroundColor); $('a-bgcolor').click(); };
 $('a-bgcolor').oninput = e => { canvas.backgroundColor = e.target.value; canvas.renderAll(); };
@@ -303,8 +379,12 @@ async function importPdf(file) {
 // ---------- QR upload from phone ----------
 const session = crypto.randomUUID();
 let qrMade = false;
-sb.channel('upload:' + session).on('broadcast', { event: 'image' }, ({ payload }) => {
-  addImage(payload.url); $('m-qr').classList.add('hidden'); toast('وصلت الصورة من الجوال ✓');
+sb.channel('upload:' + session).on('broadcast', { event: 'image' }, async ({ payload }) => {
+  $('m-qr').classList.add('hidden'); toast('وصلت الصورة من الجوال ✓');
+  if (simpleMode && currentTpl) {
+    const hasFrame = canvas.getObjects().some(o => o.data && (o.data.placeholder || o.data.photo));
+    S[hasFrame ? 'photoImg' : 'logoImg'] = await urlToImage(payload.url); syncForms(); rebuild(); renderForm($('f-fields'), scheduleRebuild);
+  } else addImage(payload.url);
 }).subscribe();
 $('a-qr').onclick = () => {
   const url = new URL('upload.html?s=' + session, location.href).href;
@@ -404,6 +484,7 @@ async function loadDesign(id, asTemplate = false) {
   const { data, error } = await sb.from('designer_designs').select('data,name').eq('id', id).single();
   if (error || !data) return toast('التصميم غير موجود');
   await openEditor(null);
+  backManual = true;
   sides = data.data.sides.map(JSON.stringify);
   await loadJSON(sides[0]); history = []; pushHistory();
   $('t-name').textContent = P.name + ' — ' + (asTemplate ? (data.name || 'قالب المطبعة') : 'تصميم محفوظ');

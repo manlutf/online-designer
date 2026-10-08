@@ -1,4 +1,16 @@
 // ---------- setup ----------
+// fabric measures Arabic glyph-by-glyph (unshaped), so RTL lines come out narrower than they render and
+// left/center-aligned text drifts. Measure unstyled lines with the real shaped width instead.
+{ const mctx = document.createElement('canvas').getContext('2d');
+  const orig = fabric.Text.prototype.measureLine;
+  fabric.Text.prototype.measureLine = function (lineIndex) {
+    const info = orig.call(this, lineIndex);
+    if (this.direction === 'rtl' && this.isEmptyStyles(lineIndex) && !this.charSpacing) {
+      mctx.font = this._getFontDeclaration(); mctx.direction = 'rtl';
+      info.width = mctx.measureText(this._textLines[lineIndex].join('')).width;
+    }
+    return info;
+  }; }
 // fabric 5.3.1 only re-applies ctx.direction/textAlign when the canvas 'dir' attribute changes, so mixed RTL/LTR text
 // drifts after the first line. Force the re-apply on every line.
 { const orig = fabric.Text.prototype._renderChars;
@@ -36,7 +48,7 @@ function renderCatalog() {
 }
 
 // ---------- gallery ----------
-let TEMPLATES = [], paletteFilter = null;
+let TEMPLATES = [], paletteFilter = null, styleFilter = null;
 Object.entries(PRODUCTS).forEach(([k, v]) => $('g-product').add(new Option(v.icon + ' ' + v.name, k, false, k === productKey)));
 $('g-product').onchange = e => location.search = '?product=' + e.target.value;
 $('g-back').onclick = () => location.search = '';
@@ -52,9 +64,13 @@ async function renderGallery() {
   const mk = (label, pal, sw) => { const c = document.createElement('button'); c.className = 'chip' + (pal === paletteFilter ? ' on' : ''); c.innerHTML = (sw ? `<i style="background:${sw}"></i>` : '') + label; c.onclick = () => { paletteFilter = pal; renderGallery(); }; chips.appendChild(c); };
   chips.innerHTML = ''; mk('كل الألوان', null);
   PALETTES.forEach(p => mk(p.name, p.name, p.accent));
+  // style chips (one per layout, named after the design style)
+  const styles = $('g-styles'); styles.innerHTML = '';
+  const mkS = (label, st) => { const c = document.createElement('button'); c.className = 'chip' + (st === styleFilter ? ' on' : ''); c.textContent = label; c.onclick = () => { styleFilter = st; renderGallery(); }; styles.appendChild(c); };
+  mkS('كل الستايلات', null); [...new Set(TEMPLATES.map(t => t.name))].forEach(n => mkS(n, n));
   // thumbnails, chunked so the UI stays responsive
   document.querySelectorAll('#g-grid .tpl:not(.blank):not(.ai)').forEach(e => e.remove());
-  const list = TEMPLATES.filter(t => !paletteFilter || t.palette === paletteFilter);
+  const list = TEMPLATES.filter(t => (!paletteFilter || t.palette === paletteFilter) && (!styleFilter || t.name === styleFilter));
   const sc = new fabric.StaticCanvas(null, { width: W, height: H });
   const mult = Math.min(360 / W, 360 / H);
   const run = ++renderGallery.run;

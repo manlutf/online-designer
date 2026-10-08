@@ -19,7 +19,7 @@
 python -m http.server 8765 --bind 0.0.0.0
 ```
 ثم افتح http://localhost:8765. لتجربة QR من الجوال محلياً افتح الصفحة بعنوان IP الجهاز على نفس الشبكة
-(مثلاً http://192.168.1.10:8765). النسخة العامة على GitHub Pages تعمل من أي مكان (انظر "النشر").
+(مثلاً http://192.168.1.10:8765). أو انشر نسخة عامة على GitHub Pages (انظر "النشر").
 
 ## الربط مع المتجر
 رابط مباشر لكل منتج يوضع كزر "صمّم بنفسك" في صفحة المنتج (يعمل مع سلة، زد، شوبيفاي، ووكومرس أو أي متجر):
@@ -53,9 +53,9 @@ python -m http.server 8765 --bind 0.0.0.0
 - جدول `designer_designs` (id, product, data, preview_url)
 - bucket عام `designer`: `uploads/` (صور الجوال)، `previews/` (معاينات)
 
-## النشر (GitHub Pages)
-المستودع مربوط بـ GitHub Pages؛ أي تعديل يُنشر بـ:
+## النشر (GitHub Pages) — خطوة واحدة
+المستودع مهيأ محلياً (git) وحساب GitHub مسجّل الدخول. لنشر رابط عام (يلزم لتجربة QR من خارج الشبكة):
 ```
-git add -A && git commit -m "update" && git push
+gh repo create online-designer --public --source . --remote origin --push && gh api -X POST repos/manlutf/online-designer/pages -f build_type=legacy -f "source[branch]=main" -f "source[path]=/"
 ```
-الرابط العام: https://manlutf.github.io/online-designer/
+بعد دقيقة يصبح الرابط: https://manlutf.github.io/online-designer/  (وأي تعديل لاحق: `git add -A && git commit -m update && git push`)

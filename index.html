@@ -4,111 +4,200 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>المصمم الإلكتروني للمطابع</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Tajawal:wght@400;700&family=Almarai:wght@400;700&family=Amiri:wght@400;700&family=Poppins:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@400;700&family=Almarai:wght@400;700&family=Amiri:wght@400;700&family=Poppins:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#f3f4f7;--panel:#fff;--line:#e4e7ec;--brand:#1d4ed8;--brand2:#0f1f3d;--text:#111827;--muted:#6b7280}
+  /* ========== design tokens ========== */
+  :root{
+    --bg:#f6f7fb; --surface:#ffffff; --surface-2:#f1f3f8; --line:#e6e8ef; --line-2:#d5d9e3;
+    --ink:#0f172a; --ink-2:#475569; --ink-3:#94a3b8;
+    --brand:#4f46e5; --brand-2:#7c3aed; --brand-soft:#eef2ff; --brand-ink:#3730a3;
+    --ok:#16a34a; --danger:#dc2626; --warn:#f59e0b;
+    --r-sm:8px; --r:12px; --r-lg:18px; --r-xl:26px;
+    --sh-sm:0 1px 2px rgba(15,23,42,.06); --sh:0 8px 24px rgba(15,23,42,.08); --sh-lg:0 24px 60px rgba(15,23,42,.16);
+    --t:.16s ease;
+  }
   *{box-sizing:border-box}
-  body{margin:0;font-family:Cairo,sans-serif;background:var(--bg);color:var(--text)}
-  button,select,input{font-family:inherit;font-size:14px}
-  button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;cursor:pointer}
-  button:hover{background:#f6f7f9}
-  button.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
-  button.primary:hover{background:#1e40af}
+  html,body{height:100%}
+  body{margin:0;font-family:Cairo,system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+  button,select,input{font-family:inherit;font-size:14px;color:inherit}
+  a{color:inherit;text-decoration:none}
   .hidden{display:none!important}
-  .hint{color:var(--muted);font-size:12px;line-height:1.6}
-  .wrapc{max-width:1200px;margin:0 auto;padding:0 20px}
+  .muted{color:var(--ink-2)}
+  .hint{color:var(--ink-3);font-size:12px;line-height:1.7}
+  .wrapc{max-width:1240px;margin:0 auto;padding:0 24px}
+  svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 
-  /* top nav (catalog + gallery) */
-  .nav{background:#fff;border-bottom:1px solid var(--line)}
-  .nav .wrapc{display:flex;align-items:center;gap:14px;height:60px}
-  .brand{font-weight:900;font-size:18px;color:var(--brand2);display:flex;align-items:center;gap:8px}
-  .brand i{display:inline-block;width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--brand),#7c3aed)}
+  /* ========== components ========== */
+  .btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer;transition:var(--t);white-space:nowrap;line-height:1}
+  .btn:hover{background:var(--surface-2);border-color:var(--line-2)}
+  .btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(79,70,229,.28)}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .btn.ghost{background:transparent;border-color:transparent}
+  .btn.ghost:hover{background:var(--surface-2)}
+  .btn.soft{background:var(--brand-soft);color:var(--brand-ink);border-color:transparent}
+  .btn.icon{width:36px;height:36px;padding:0;justify-content:center;border-radius:9px}
+  .btn.danger{color:var(--danger)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:600;cursor:pointer;transition:var(--t);color:var(--ink-2)}
+  .chip:hover{border-color:var(--line-2);color:var(--ink)}
+  .chip.on{border-color:var(--brand);background:var(--brand-soft);color:var(--brand-ink)}
+  .chip i{display:inline-block;width:12px;height:12px;border-radius:50%}
+  .pill{display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+  .pill .btn.icon{width:32px;height:32px;border:0;background:transparent}
+  .pill .btn.icon:hover{background:var(--surface-2)}
+  .seg{display:inline-flex;background:var(--surface-2);border-radius:10px;padding:3px;gap:2px}
+  .seg button{border:0;background:transparent;border-radius:8px;padding:6px 12px;font-weight:600;color:var(--ink-2);cursor:pointer;transition:var(--t)}
+  .seg button.on{background:var(--surface);color:var(--ink);box-shadow:var(--sh-sm)}
+  .tag{display:inline-flex;align-items:center;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;background:var(--brand-soft);color:var(--brand-ink)}
+  input[type=color]{width:38px;height:34px;border:1px solid var(--line-2);border-radius:9px;padding:2px;background:var(--surface);cursor:pointer}
+
+  /* ========== top nav ========== */
+  .nav{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.96);border-bottom:1px solid var(--line)}
+  .nav .wrapc{display:flex;align-items:center;gap:14px;height:64px}
+  .brand{font-weight:900;font-size:18px;display:flex;align-items:center;gap:10px}
+  .brand i{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;box-shadow:0 6px 14px rgba(79,70,229,.3)}
   .nav .sp{flex:1}
-  .pill{font-size:12px;background:#eef2ff;color:#3730a3;border-radius:999px;padding:4px 10px}
 
-  /* catalog */
-  .hero{background:linear-gradient(135deg,#0f1f3d,#1d4ed8 70%,#7c3aed);color:#fff;padding:56px 0 48px}
-  .hero h1{margin:0 0 10px;font-size:36px;font-weight:900}
-  .hero p{margin:0;font-size:16px;opacity:.9;max-width:640px;line-height:1.7}
-  .stats{display:flex;gap:28px;margin-top:28px;flex-wrap:wrap}
-  .stat b{display:block;font-size:28px}
+  /* ========== catalog ========== */
+  .hero{position:relative;overflow:hidden;background:linear-gradient(120deg,#1e1b4b 0%,#4f46e5 55%,#7c3aed 100%);color:#fff;padding:72px 0 64px}
+  .hero:before{content:"";position:absolute;inset:-40% -10% auto auto;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.22),transparent 60%)}
+  .hero .wrapc{position:relative;display:grid;grid-template-columns:1.2fr .8fr;gap:40px;align-items:center}
+  @media (max-width:860px){.hero .wrapc{grid-template-columns:1fr}}
+  .hero h1{margin:0 0 14px;font-size:40px;font-weight:900;line-height:1.25}
+  .hero p{margin:0 0 26px;font-size:16px;opacity:.9;max-width:620px;line-height:1.8}
+  .hero .cta{display:flex;gap:10px;flex-wrap:wrap}
+  .hero .btn.light{background:#fff;color:var(--brand-ink);border-color:transparent}
+  .hero .btn.outline{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.35)}
+  .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .stat{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:var(--r-lg);padding:18px}
+  .stat b{display:block;font-size:30px;line-height:1.1}
   .stat span{font-size:13px;opacity:.85}
-  .section{padding:32px 0}
-  .section h2{margin:0 0 16px;font-size:20px}
-  .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
-  .pcard{text-decoration:none;color:inherit;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 16px;cursor:pointer;transition:.15s;display:flex;flex-direction:column;gap:6px}
-  .pcard:hover{box-shadow:0 8px 24px rgba(0,0,0,.09);transform:translateY(-2px);border-color:#c7d2fe}
-  .pcard .ic{font-size:30px}
+  .section{padding:40px 0}
+  .section h2{margin:0 0 6px;font-size:22px;font-weight:900}
+  .section .sub{margin:0 0 20px;color:var(--ink-2);font-size:14px}
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+  .pcard{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;cursor:pointer;transition:var(--t);box-shadow:var(--sh-sm)}
+  .pcard:hover{transform:translateY(-3px);box-shadow:var(--sh);border-color:#c7d2fe}
+  .pcard .thumb{height:150px;background:var(--surface-2);display:grid;place-items:center;padding:16px;overflow:hidden}
+  .pcard .thumb img{max-width:100%;max-height:100%;border-radius:4px;box-shadow:var(--sh)}
+  .pcard .meta{padding:12px 14px 14px;display:flex;flex-direction:column;gap:3px}
   .pcard b{font-size:15px}
-  .pcard small{color:var(--muted);font-size:12px}
-  .pcard .cnt{margin-top:auto;font-size:12px;color:var(--brand);font-weight:700}
-  .flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
-  .step{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}
-  .step b{display:block;margin-bottom:6px}
-  .step .n{display:inline-block;width:26px;height:26px;border-radius:50%;background:var(--brand);color:#fff;text-align:center;line-height:26px;font-weight:700;margin-bottom:8px}
+  .pcard small{color:var(--ink-3);font-size:12px}
+  .pcard .cnt{margin-top:6px;font-size:12px;color:var(--brand);font-weight:700}
+  .flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px}
+  .step .n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:10px;background:var(--brand-soft);color:var(--brand-ink);font-weight:800;margin-bottom:10px}
+  .step b{display:block;margin-bottom:6px;font-size:14px}
+  footer.foot{padding:30px 0 50px;color:var(--ink-3);font-size:12px;text-align:center}
 
-  /* gallery */
-  #gallery .head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:22px 0 14px}
-  #gallery h1{margin:0;font-size:22px}
-  #gallery select{padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
-  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px 4px 6px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px}
-  .chip.on{border-color:var(--brand);background:#eef2ff}
-  .chip i{display:inline-block;width:14px;height:14px;border-radius:50%}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;padding-bottom:40px}
-  .tpl{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;transition:.15s}
-  .tpl:hover{box-shadow:0 6px 18px rgba(0,0,0,.1);transform:translateY(-2px)}
-  .tpl .th{width:100%;aspect-ratio:var(--ar);display:flex;align-items:center;justify-content:center;background:#eceef2;border-radius:6px;overflow:hidden}
+  /* ========== gallery ========== */
+  #gallery .head{position:sticky;top:64px;z-index:10;background:rgba(246,247,251,.98);padding:18px 0 10px}
+  #gallery .row1{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  #gallery h1{margin:0;font-size:22px;font-weight:900}
+  #gallery .row1 select{padding:8px 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);font-weight:600}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .chips .lbl{font-size:12px;color:var(--ink-3);align-self:center;margin-inline-end:4px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding:14px 0 60px}
+  .tpl{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:10px;cursor:pointer;transition:var(--t);position:relative}
+  .tpl:hover{box-shadow:var(--sh);transform:translateY(-3px);border-color:#c7d2fe}
+  .tpl .th{width:100%;aspect-ratio:var(--ar);display:flex;align-items:center;justify-content:center;background:var(--surface-2);border-radius:10px;overflow:hidden}
   .tpl img{max-width:100%;max-height:100%;display:block}
-  .tpl .n{font-size:12px;margin-top:8px;color:#444;display:flex;justify-content:space-between}
+  .tpl .n{font-size:12.5px;margin-top:9px;color:var(--ink-2);display:flex;justify-content:space-between;align-items:center;font-weight:600}
   .tpl .n i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-inline-start:3px}
-  .tpl.blank .th{border:2px dashed var(--brand);background:#fff;color:var(--brand);font-weight:700;font-size:15px}
-  .tpl.ai .th{border:2px dashed #a78bfa;background:#faf5ff;color:#6d28d9;font-weight:700;font-size:14px;flex-direction:column;gap:4px}
+  .tpl.blank .th,.tpl.ai .th,.tpl.up .th{border:1.5px dashed var(--brand);background:var(--brand-soft);color:var(--brand-ink);font-weight:700;font-size:14px;flex-direction:column;gap:6px}
+  .tpl.ai .th{border-color:#a78bfa;background:#f5f3ff;color:#6d28d9}
+  .tpl.up .th{border-color:#34d399;background:#ecfdf5;color:#047857}
+  .tpl .th svg.i{width:26px;height:26px}
+  .mine-title{display:flex;align-items:center;gap:8px;margin:12px 0 4px;font-weight:800;font-size:14px}
 
-  /* editor */
-  #editor{display:grid;grid-template-rows:54px 1fr;height:100vh;width:100vw;overflow:hidden}
-  .topbar{display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line);white-space:nowrap;overflow-x:auto;min-width:0}
+  /* ========== editor ========== */
+  #editor{display:grid;grid-template-rows:58px 1fr;height:100vh;width:100vw;overflow:hidden}
+  .topbar{display:flex;align-items:center;gap:10px;padding:0 14px;background:var(--surface);border-bottom:1px solid var(--line);white-space:nowrap;overflow-x:auto;min-width:0}
   .topbar .sp{flex:1}
-  .topbar .seg button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
-  .body{display:grid;grid-template-columns:76px minmax(0,1fr) 270px;min-height:0;min-width:0}
-  .rail{background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;gap:2px;padding:8px 6px;overflow:auto}
-  .rail button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;padding:8px 2px;border-radius:8px}
-  .rail button:hover{background:#eef2ff}
-  .rail button span{font-size:20px}
-  .stage{overflow:auto;display:flex;padding:24px;background:#e9ebf0}
-  .stage .wrap{box-shadow:0 10px 30px rgba(0,0,0,.18);background:#fff;line-height:0;margin:auto}
-  .props{background:var(--panel);border-right:1px solid var(--line);padding:12px;overflow:auto;font-size:13px}
-  .props h4{margin:0 0 10px;font-size:13px;color:var(--muted)}
-  .props .row{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
-  .props label{min-width:60px;color:#555}
-  .props select,.props input[type=number]{flex:1;padding:5px;border:1px solid var(--line);border-radius:6px}
-  .props input[type=color]{width:36px;height:30px;border:1px solid var(--line);border-radius:6px;padding:0;background:none}
-  .props .mini button{padding:5px 8px}
-  .legend{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
-  .legend i{display:inline-block;width:22px;border-top:2px dashed;vertical-align:middle;margin-inline-end:6px}
+  .topbar .title{display:flex;flex-direction:column;line-height:1.15}
+  .topbar .title b{font-size:14px}
+  .topbar .title small{font-size:11px;color:var(--ink-3)}
+  .body{display:grid;grid-template-columns:88px minmax(0,1fr) 290px;min-height:0;min-width:0}
+  .rail{background:var(--surface);border-left:1px solid var(--line);display:flex;flex-direction:column;gap:2px;padding:10px 8px;overflow:auto}
+  .tool{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--ink-2);padding:10px 2px 8px;border-radius:12px;cursor:pointer;transition:var(--t)}
+  .tool:hover{background:var(--brand-soft);color:var(--brand-ink)}
+  .tool svg.i{width:22px;height:22px}
+  .rail .sep{height:1px;background:var(--line);margin:6px 8px}
+  .stage{overflow:auto;display:flex;padding:28px;background:var(--bg);background-image:radial-gradient(var(--line-2) 1px,transparent 1px);background-size:20px 20px}
+  .stage .wrap{box-shadow:var(--sh-lg);background:#fff;line-height:0;margin:auto;border-radius:2px}
+  .props{background:var(--surface);border-right:1px solid var(--line);padding:14px;overflow:auto;font-size:13px}
+  .props h4{margin:0 0 12px;font-size:12px;letter-spacing:.3px;color:var(--ink-3);font-weight:700}
+  .sec{padding:12px 0;border-top:1px solid var(--line)}
+  .sec:first-of-type{border-top:0;padding-top:0}
+  .sec h5{margin:0 0 10px;font-size:12.5px;color:var(--ink-2)}
+  .row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .row label{min-width:62px;color:var(--ink-2);font-size:12px}
+  .row select,.row input[type=number]{flex:1;border:1px solid var(--line-2);border-radius:9px;padding:7px 9px;background:var(--surface);font-size:13px}
+  .row.mini{flex-wrap:wrap;gap:6px}
+  .row.mini .btn.icon{width:34px;height:34px}
+  .legend{margin-top:14px}
+  .legend div{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;color:var(--ink-2)}
+  .legend i{display:inline-block;width:22px;border-top:2px dashed}
+  .kbd{display:inline-block;border:1px solid var(--line-2);border-bottom-width:2px;border-radius:5px;padding:0 5px;font-size:10.5px;color:var(--ink-2);background:var(--surface-2)}
 
-  /* modal */
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:50}
-  .modal .box{background:#fff;border-radius:14px;padding:24px;min-width:320px;max-width:90vw;text-align:center}
-  .modal h3{margin:0 0 8px}
-  #qr{display:flex;justify-content:center;margin:12px 0}
-  code{background:#f3f4f6;padding:4px 8px;border-radius:6px;font-size:12px;direction:ltr;display:inline-block;word-break:break-all}
-  #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;z-index:60}
+  /* ========== modal / toast ========== */
+  .modal{position:fixed;inset:0;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;z-index:50}
+  .modal .box{background:#fff;border-radius:var(--r-xl);padding:28px;min-width:340px;max-width:92vw;text-align:center;box-shadow:var(--sh-lg)}
+  .modal h3{margin:0 0 6px;font-size:18px}
+  #qr{display:flex;justify-content:center;margin:14px 0;padding:12px;background:var(--surface-2);border-radius:var(--r-lg)}
+  code{background:var(--surface-2);padding:5px 9px;border-radius:8px;font-size:12px;direction:ltr;display:inline-block;word-break:break-all;color:var(--ink-2)}
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;z-index:60;box-shadow:var(--sh-lg)}
+  #busy{position:fixed;inset:0;z-index:55;display:grid;place-items:center;background:rgba(255,255,255,.6);font-weight:700}
 </style>
 </head>
 <body>
 
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 6V4h16v2M12 4v16M8 20h8"/></symbol>
+  <symbol id="i-heading" viewBox="0 0 24 24"><path d="M5 4v16M19 4v16M5 12h14"/></symbol>
+  <symbol id="i-square" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/></symbol>
+  <symbol id="i-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></symbol>
+  <symbol id="i-line" viewBox="0 0 24 24"><path d="M4 12h16"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2v-1a2 2 0 0 1 2-2h1.5A3.5 3.5 0 0 0 21 12.5 9 9 0 0 0 12 3z"/><circle cx="8" cy="10" r="1"/><circle cx="12" cy="7" r="1"/><circle cx="16" cy="10" r="1"/></symbol>
+  <symbol id="i-font" viewBox="0 0 24 24"><path d="M4 20l6-16h4l6 16M7.5 13h9"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14l-4-4 4-4M5 10h9a5 5 0 0 1 0 10h-2"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 14l4-4-4-4M19 10h-9a5 5 0 0 0 0 10h2"/></symbol>
+  <symbol id="i-fit" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v12m0 0l-4-4m4 4l4-4M4 18v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3M8 21v-7h8v7"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5m0 0l-5 5m5-5l5 5"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14m0 0l5-5m-5 5l-5-5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-layout" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></symbol>
+</svg>
+
 <nav class="nav" id="nav"><div class="wrapc">
-  <a class="brand" href="index.html" style="text-decoration:none"><i></i> المصمم الإلكتروني</a>
-  <span class="pill">نسخة تجريبية</span>
+  <a class="brand" href="index.html"><i><svg class="i"><use href="#i-layout"/></svg></i> المصمم الإلكتروني</a>
+  <span class="tag">نسخة تجريبية</span>
   <span class="sp"></span>
   <span class="hint">يُربط بأي متجر إلكتروني برابط واحد لكل منتج</span>
 </div></nav>
 
 <section id="catalog">
   <div class="hero"><div class="wrapc">
-    <h1>صمّم مطبوعاتك بنفسك خلال دقائق</h1>
-    <p>محرر تصميم داخل متجر المطبعة: قوالب احترافية لكل منتج، تعديل حر كأنك في كانفا، رفع الصور من الجوال بمسح QR، وملف PDF جاهز للطباعة بدقة 300dpi مع هوامش القص.</p>
+    <div>
+      <span class="tag" style="background:rgba(255,255,255,.18);color:#fff">للمطابع والمتاجر الإلكترونية</span>
+      <h1>صمّم مطبوعاتك بنفسك خلال دقائق</h1>
+      <p>محرر تصميم داخل متجر المطبعة: قوالب احترافية لكل منتج، تعديل حر كأنك في كانفا، رفع الصور من الجوال بمسح QR، رفع خطوطك وتصاميمك الجاهزة (PDF/AI)، وملف PDF للطباعة بدقة 300dpi مع هوامش القص.</p>
+      <div class="cta">
+        <a class="btn light" href="?product=cards"><svg class="i"><use href="#i-spark"/></svg> جرّب على الكروت</a>
+        <a class="btn outline" href="#products">تصفّح المنتجات</a>
+      </div>
+    </div>
     <div class="stats">
       <div class="stat"><b id="st-products">0</b><span>منتجاً طباعياً</span></div>
       <div class="stat"><b id="st-templates">0</b><span>قالباً جاهزاً</span></div>
@@ -116,63 +205,84 @@
       <div class="stat"><b>QR</b><span>رفع فوري من الجوال</span></div>
     </div>
   </div></div>
-  <div class="section wrapc">
+  <div class="section wrapc" id="products">
     <h2>اختر المنتج</h2>
+    <p class="sub">كل منتج بمقاسه الحقيقي وهوامش القص، وقوالب مصممة له خصيصاً</p>
     <div class="pgrid" id="pgrid"></div>
   </div>
   <div class="section wrapc">
     <h2>كيف يعمل داخل متجر المطبعة؟</h2>
+    <p class="sub">رابط واحد لكل منتج، بدون تغيير في منصة المتجر</p>
     <div class="flow">
-      <div class="step"><span class="n">1</span><b>زر "صمّم بنفسك" في صفحة المنتج</b><span class="hint">رابط واحد لكل منتج، يعمل مع سلة، زد، شوبيفاي، ووكومرس أو أي متجر.</span></div>
-      <div class="step"><span class="n">2</span><b>العميل يختار قالباً أو يبدأ من الصفر</b><span class="hint">يعدّل النصوص والألوان والخطوط ويرفع شعاره من اللابتوب أو الجوال.</span></div>
-      <div class="step"><span class="n">3</span><b>حفظ وإرسال للمطبعة</b><span class="hint">يحصل على رقم تصميم يضعه في الطلب، والمطبعة تفتح الرابط وتصدّر PDF مباشرة.</span></div>
+      <div class="step"><span class="n">1</span><b>زر "صمّم بنفسك" في صفحة المنتج</b><span class="hint">يعمل مع سلة، زد، شوبيفاي، ووكومرس أو أي متجر.</span></div>
+      <div class="step"><span class="n">2</span><b>العميل يختار قالباً أو يرفع تصميمه</b><span class="hint">يعدّل النصوص والألوان والخطوط، ويرفع شعاره من اللابتوب أو الجوال، أو يستورد ملف PDF/AI جاهزاً.</span></div>
+      <div class="step"><span class="n">3</span><b>حفظ وإرسال للمطبعة</b><span class="hint">رقم تصميم يُوضع في الطلب، والمطبعة تفتح الرابط وتصدّر PDF مباشرة.</span></div>
       <div class="step"><span class="n">4</span><b>قريباً: التصميم بالذكاء الاصطناعي</b><span class="hint">يكتب العميل وصفاً ويحصل على تصميم جاهز للتعديل.</span></div>
     </div>
   </div>
+  <footer class="foot">المصمم الإلكتروني · نسخة تجريبية للعرض</footer>
 </section>
 
 <section id="gallery" class="hidden"><div class="wrapc">
   <div class="head">
-    <button id="g-back">← كل المنتجات</button>
-    <h1 id="g-title"></h1>
-    <select id="g-product"></select>
-    <span style="flex:1"></span>
-    <span class="hint" id="g-count"></span>
+    <div class="row1">
+      <button class="btn ghost" id="g-back"><svg class="i"><use href="#i-back"/></svg> كل المنتجات</button>
+      <h1 id="g-title"></h1>
+      <select id="g-product"></select>
+      <span style="flex:1"></span>
+      <span class="hint" id="g-count"></span>
+    </div>
+    <div class="chips" id="g-chips"></div>
+    <div class="chips" id="g-styles"></div>
   </div>
-  <div class="chips" id="g-chips"></div>
-  <div class="chips" id="g-styles"></div>
+  <div id="g-mine-wrap" class="hidden">
+    <div class="mine-title"><svg class="i"><use href="#i-star"/></svg> قوالب المطبعة المرفوعة</div>
+    <div class="grid" id="g-mine" style="padding-bottom:10px"></div>
+  </div>
   <div class="grid" id="g-grid">
-    <div class="tpl blank" id="g-blank"><div class="th">+ ابدأ من الصفر</div><div class="n">تصميم حر</div></div>
-    <div class="tpl ai" id="g-ai"><div class="th"><span>✨ تصميم بالذكاء الاصطناعي</span><small>قريباً</small></div><div class="n">اكتب وصفاً واحصل على تصميم</div></div>
+    <div class="tpl blank" id="g-blank"><div class="th"><svg class="i"><use href="#i-plus"/></svg>ابدأ من الصفر</div><div class="n"><span>تصميم حر</span></div></div>
+    <div class="tpl up" id="g-upload"><div class="th"><svg class="i"><use href="#i-upload"/></svg>ارفع تصميمك الجاهز<small style="font-weight:400">PDF أو AI</small></div><div class="n"><span>يُستورد إلى المحرر بالمقاس</span></div></div>
+    <div class="tpl ai" id="g-ai"><div class="th"><svg class="i"><use href="#i-spark"/></svg>تصميم بالذكاء الاصطناعي<small style="font-weight:400">قريباً</small></div><div class="n"><span>اكتب وصفاً واحصل على تصميم</span></div></div>
   </div>
 </div></section>
 
 <section id="editor" class="hidden">
   <div class="topbar">
-    <button id="t-back">← القوالب</button>
-    <strong id="t-name"></strong>
-    <span class="hint" id="t-size"></span>
+    <button class="btn ghost" id="t-back"><svg class="i"><use href="#i-back"/></svg> القوالب</button>
+    <div class="title"><b id="t-name"></b><small id="t-size"></small></div>
     <span class="seg" id="t-sides"></span>
     <span class="sp"></span>
-    <button id="t-undo" title="تراجع (Ctrl+Z)">↶</button>
-    <button id="t-redo" title="إعادة (Ctrl+Y)">↷</button>
-    <button id="t-fit">ملاءمة</button>
+    <span class="pill">
+      <button class="btn icon" id="t-undo" title="تراجع Ctrl+Z"><svg class="i"><use href="#i-undo"/></svg></button>
+      <button class="btn icon" id="t-redo" title="إعادة Ctrl+Y"><svg class="i"><use href="#i-redo"/></svg></button>
+    </span>
+    <span class="pill">
+      <button class="btn icon" id="t-fit" title="ملاءمة"><svg class="i"><use href="#i-fit"/></svg></button>
+      <span id="t-zoom" style="font-size:12px;font-weight:700;color:var(--ink-2);padding:0 8px;min-width:48px;text-align:center">100%</span>
+    </span>
     <span class="sp"></span>
-    <button id="t-png">PNG</button>
-    <button id="t-pdf">PDF للطباعة</button>
-    <button id="t-save" class="primary">حفظ وإرسال للمطبعة</button>
+    <button class="btn ghost" id="t-png"><svg class="i"><use href="#i-download"/></svg> PNG</button>
+    <button class="btn" id="t-pdf"><svg class="i"><use href="#i-file"/></svg> PDF للطباعة</button>
+    <button class="btn soft" id="t-template" title="يظهر في معرض هذا المنتج"><svg class="i"><use href="#i-star"/></svg> حفظ كقالب</button>
+    <button class="btn primary" id="t-save"><svg class="i"><use href="#i-save"/></svg> حفظ وإرسال للمطبعة</button>
   </div>
   <div class="body">
     <div class="rail">
-      <button id="a-heading"><span>T</span>عنوان</button>
-      <button id="a-text"><span>t</span>نص</button>
-      <button id="a-rect"><span>▭</span>مستطيل</button>
-      <button id="a-circle"><span>●</span>دائرة</button>
-      <button id="a-line"><span>—</span>خط</button>
-      <button id="a-image"><span>🖼</span>صورة</button>
-      <button id="a-qr"><span>📱</span>من الجوال</button>
-      <button id="a-bg"><span>🎨</span>الخلفية</button>
+      <button class="tool" id="a-heading"><svg class="i"><use href="#i-heading"/></svg>عنوان</button>
+      <button class="tool" id="a-text"><svg class="i"><use href="#i-text"/></svg>نص</button>
+      <button class="tool" id="a-rect"><svg class="i"><use href="#i-square"/></svg>مستطيل</button>
+      <button class="tool" id="a-circle"><svg class="i"><use href="#i-circle"/></svg>دائرة</button>
+      <button class="tool" id="a-line"><svg class="i"><use href="#i-line"/></svg>خط</button>
+      <div class="sep"></div>
+      <button class="tool" id="a-image"><svg class="i"><use href="#i-image"/></svg>صورة</button>
+      <button class="tool" id="a-qr"><svg class="i"><use href="#i-phone"/></svg>من الجوال</button>
+      <button class="tool" id="a-import"><svg class="i"><use href="#i-upload"/></svg>PDF / AI</button>
+      <button class="tool" id="a-font"><svg class="i"><use href="#i-font"/></svg>رفع خط</button>
+      <div class="sep"></div>
+      <button class="tool" id="a-bg"><svg class="i"><use href="#i-palette"/></svg>الخلفية</button>
       <input id="a-file" type="file" accept="image/*" class="hidden">
+      <input id="a-importfile" type="file" accept=".pdf,.ai,application/pdf,application/postscript" class="hidden">
+      <input id="a-fontfile" type="file" accept=".ttf,.otf,.woff,.woff2" multiple class="hidden">
       <input id="a-bgcolor" type="color" class="hidden">
     </div>
     <div class="stage"><div class="wrap"><canvas id="c"></canvas></div></div>
@@ -180,30 +290,40 @@
       <div id="p-none">
         <h4>الخصائص</h4>
         <div class="hint">اختر عنصراً على التصميم لتعديله. اضغط مرتين على النص لتحريره.<br>اختر مكان الصورة ثم ارفع صورة لتحل محله.</div>
-        <div class="legend hint">
+        <div class="legend">
           <div><i style="border-color:#ef4444"></i> حد القص (bleed)</div>
           <div><i style="border-color:#22c55e"></i> المنطقة الآمنة للنصوص</div>
           <div id="legend-fold" class="hidden"><i style="border-color:#9ca3af"></i> خطوط الطي</div>
         </div>
+        <div class="hint" style="margin-top:14px"><span class="kbd">Del</span> حذف · <span class="kbd">Ctrl</span>+<span class="kbd">Z</span> تراجع · <span class="kbd">Ctrl</span>+<span class="kbd">D</span> نسخ</div>
       </div>
       <div id="p-obj" class="hidden">
         <h4>الخصائص</h4>
-        <div class="row"><label>اللون</label><input id="p-fill" type="color"></div>
-        <div class="row"><label>الشفافية</label><input id="p-opacity" type="number" min="0" max="100" step="5"></div>
-        <div id="p-text">
+        <div class="sec">
+          <h5>اللون والشفافية</h5>
+          <div class="row"><label>اللون</label><input id="p-fill" type="color"></div>
+          <div class="row"><label>الشفافية</label><input id="p-opacity" type="number" min="0" max="100" step="5"></div>
+        </div>
+        <div id="p-text" class="sec">
+          <h5>النص</h5>
           <div class="row"><label>الخط</label><select id="p-font">
             <option>Cairo</option><option>Tajawal</option><option>Almarai</option><option>Amiri</option>
             <option>Poppins</option><option>Montserrat</option><option>Playfair Display</option></select></div>
           <div class="row"><label>الحجم</label><input id="p-size" type="number" min="4" max="900"></div>
           <div class="row mini">
-            <button id="p-bold"><b>B</b></button><button id="p-italic"><i>I</i></button>
-            <button id="p-right">⇤</button><button id="p-center">☰</button><button id="p-left">⇥</button>
-            <button id="p-dir">RTL/LTR</button>
+            <button class="btn icon" id="p-bold" title="عريض"><b>B</b></button><button class="btn icon" id="p-italic" title="مائل"><i>I</i></button>
+            <button class="btn icon" id="p-right" title="يمين">⇤</button><button class="btn icon" id="p-center" title="وسط">☰</button><button class="btn icon" id="p-left" title="يسار">⇥</button>
+            <button class="btn" id="p-dir" style="padding:0 10px;height:34px">RTL/LTR</button>
           </div>
         </div>
-        <div class="row mini">
-          <button id="p-front">للأمام</button><button id="p-backw">للخلف</button>
-          <button id="p-dup">نسخ</button><button id="p-del" style="color:#dc2626">حذف</button>
+        <div class="sec">
+          <h5>الترتيب</h5>
+          <div class="row mini">
+            <button class="btn icon" id="p-front" title="للأمام"><svg class="i"><use href="#i-up"/></svg></button>
+            <button class="btn icon" id="p-backw" title="للخلف"><svg class="i"><use href="#i-down"/></svg></button>
+            <button class="btn icon" id="p-dup" title="نسخ"><svg class="i"><use href="#i-copy"/></svg></button>
+            <button class="btn icon danger" id="p-del" title="حذف"><svg class="i"><use href="#i-trash"/></svg></button>
+          </div>
         </div>
       </div>
     </div>
@@ -216,25 +336,27 @@
     <p class="hint">ارفع الصورة من الجوال وستظهر هنا فوراً</p>
     <div id="qr"></div>
     <code id="qr-url"></code><br><br>
-    <button onclick="document.getElementById('m-qr').classList.add('hidden')">إغلاق</button>
+    <button class="btn" onclick="document.getElementById('m-qr').classList.add('hidden')">إغلاق</button>
   </div>
 </div>
 
 <div id="m-saved" class="modal hidden">
   <div class="box">
-    <h3>تم حفظ التصميم ✓</h3>
-    <p class="hint">انسخ رقم التصميم وضعه في ملاحظات الطلب، أو شارك الرابط مع المطبعة</p>
+    <h3 id="s-title">تم حفظ التصميم ✓</h3>
+    <p class="hint" id="s-hint">انسخ رقم التصميم وضعه في ملاحظات الطلب، أو شارك الرابط مع المطبعة</p>
     <p>رقم التصميم:<br><code id="s-id"></code></p>
     <code id="s-url"></code><br><br>
-    <button id="s-copy" class="primary">نسخ الرابط</button>
-    <button onclick="document.getElementById('m-saved').classList.add('hidden')">إغلاق</button>
+    <button class="btn primary" id="s-copy">نسخ الرابط</button>
+    <button class="btn" onclick="document.getElementById('m-saved').classList.add('hidden')">إغلاق</button>
   </div>
 </div>
+<div id="busy" class="hidden">جاري المعالجة…</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="config.js"></script>
 <script src="templates.js"></script>
 <script src="app.js"></script>

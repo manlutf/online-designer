@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>رفع صورة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;font-family:Cairo,sans-serif;background:#f4f5f7;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}
+  .card{background:#fff;border-radius:16px;padding:28px 20px;max-width:380px;width:100%;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.08)}
+  h1{font-size:20px;margin:0 0 8px}
+  p{color:#666;margin:0 0 20px;font-size:14px}
+  label{display:block;background:#2563eb;color:#fff;padding:16px;border-radius:12px;font-size:18px;font-weight:700;cursor:pointer}
+  input{display:none}
+  #status{margin-top:16px;font-size:15px;min-height:24px}
+  .ok{color:#16a34a}.err{color:#dc2626}
+  img{max-width:100%;border-radius:8px;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>ارفع صورة للتصميم</h1>
+  <p>اختر صورة من الجوال أو صوّر الآن، وستظهر مباشرة على الشاشة</p>
+  <label for="f">📷 اختيار / تصوير</label>
+  <input id="f" type="file" accept="image/*" multiple>
+  <div id="status"></div>
+  <div id="preview"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+  const session = new URLSearchParams(location.search).get('s');
+  const status = document.getElementById('status');
+  if (!session) status.innerHTML = '<span class="err">رابط غير صالح — امسح الـ QR من جديد</span>';
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const channel = sb.channel('upload:' + session);
+  let ready = false;
+  channel.subscribe(s => { ready = s === 'SUBSCRIBED'; });
+
+  document.getElementById('f').addEventListener('change', async e => {
+    for (const file of e.target.files) {
+      status.textContent = 'جاري الرفع…';
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const path = `uploads/${session}/${Date.now()}.${ext}`;
+      const { error } = await sb.storage.from(BUCKET).upload(path, file, { contentType: file.type });
+      if (error) { status.innerHTML = '<span class="err">فشل الرفع: ' + error.message + '</span>'; continue; }
+      const url = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+      if (!ready) await new Promise(r => setTimeout(r, 800));
+      await channel.send({ type: 'broadcast', event: 'image', payload: { url } });
+      status.innerHTML = '<span class="ok">✓ تم — الصورة ظهرت على الشاشة</span>';
+      document.getElementById('preview').innerHTML = `<img src="${url}">`;
+    }
+  });
+</script>
+</body>
+</html>

@@ -98,7 +98,7 @@ async function renderCatalog() {
 }
 
 // ---------- simple mode: one form drives every template ----------
-let simpleMode = true, currentTpl = null, backManual = false, rebuildTimer = null, galleryTimer = null;
+let simpleMode = true, currentTpl = null, backManual = false, backMode = 'auto', rebuildTimer = null, galleryTimer = null;
 const fileToImage = file => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = r.result; }; r.readAsDataURL(file); });
 const urlToImage = url => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = rej; im.src = url; });
 
@@ -132,19 +132,41 @@ function syncForms() {   // keep both forms (gallery + editor) showing the same 
 function buildInto(tpl) {
   loading = true; canvas.clear(); canvas.backgroundColor = '#fff';
   const { bg, objects } = tpl.build(W, H, B); canvas.backgroundColor = bg; canvas.add(...objects);
-  canvas.forEachObject(o => { o.selectable = !simpleMode; o.evented = !simpleMode; });
+  applyHotspots();
   canvas.renderAll(); loading = false;
+}
+const isHot = o => o && o.data && (o.data.placeholder || o.data.photo || o.data.logo);
+function applyHotspots() {   // in simple mode only photo/logo areas react to clicks (they open the upload dialog)
+  canvas.forEachObject(o => { const hot = isHot(o); o.selectable = !simpleMode; o.evented = !simpleMode || !!hot; o.hoverCursor = simpleMode && hot ? 'pointer' : (simpleMode ? 'default' : 'move'); });
 }
 function rebuild() {   // simple mode: regenerate the current side(s) from S
   if (!simpleMode || !currentTpl) return;
   if (side !== 0) { sides[side] = snapshot(); }
   const cur = side;
-  if (P.sides > 1 && !backManual) { side = 1; buildInto({ build: (w, h, b) => buildBack(w, h, b, currentTpl.paletteObj) }); sides[1] = snapshot(); }
+  if (P.sides > 1 && !backManual) {
+    side = 1;
+    if (backMode === 'dup') buildInto(currentTpl);
+    else if (backMode === 'blank') { loading = true; canvas.clear(); canvas.backgroundColor = currentTpl.paletteObj.bg; canvas.renderAll(); loading = false; }
+    else buildInto({ build: (w, h, b) => buildBack(w, h, b, currentTpl.paletteObj) });
+    sides[1] = snapshot();
+  }
   side = 0; buildInto(currentTpl); sides[0] = snapshot();
   if (cur !== 0) { side = cur; loadJSON(sides[cur]); }
   renderSideButtons(); history = []; pushHistory();
 }
 const scheduleRebuild = () => { clearTimeout(rebuildTimer); rebuildTimer = setTimeout(rebuild, 120); };
+function renderBackModes() {
+  const root = $('f-back'); root.innerHTML = '';
+  $('f-back-sec').classList.toggle('hidden', P.sides < 2);
+  [['auto', 'تلقائي (الشعار)'], ['dup', 'نسخة من الأمامي'], ['blank', 'فارغ'], ['manual', 'رفع تصميم']].forEach(([m, label]) => {
+    const c = document.createElement('button'); c.type = 'button'; c.className = 'chip' + (m === backMode ? ' on' : ''); c.textContent = t(label);
+    c.onclick = async () => {
+      if (m === 'manual') { backMode = 'manual'; backManual = true; renderBackModes(); await switchSide(1); $('a-importfile').dataset.fresh = ''; $('a-importfile').click(); return; }
+      backMode = m; backManual = false; renderBackModes(); rebuild(); switchSide(1);
+    };
+    root.appendChild(c);
+  });
+}
 function renderPaletteChips() {
   const root = $('f-palettes'); root.innerHTML = '';
   if (!currentTpl) return;
@@ -164,7 +186,7 @@ function setMode(simple) {
   $('a-advanced').classList.toggle('hidden', !simple);
   $('a-simple').classList.toggle('hidden', simple || !currentTpl);
   canvas.selection = !simple;
-  canvas.forEachObject(o => { o.selectable = !simple; o.evented = !simple; });
+  applyHotspots();
   canvas.discardActiveObject(); canvas.renderAll();
 }
 
@@ -258,6 +280,7 @@ function initCanvas() {
   });
   ['object:added', 'object:modified', 'object:removed'].forEach(ev => canvas.on(ev, () => { pushHistory(); if (!loading && !simpleMode && side === 1) backManual = true; }));
   ['selection:created', 'selection:updated', 'selection:cleared'].forEach(ev => canvas.on(ev, syncProps));
+  canvas.on('mouse:down', e => { if (simpleMode && currentTpl && isHot(e.target)) openUpload(e.target.data.logo ? 'logo' : 'photo'); });
   new ResizeObserver(fit).observe(document.querySelector('.stage'));
 }
 
@@ -280,7 +303,7 @@ async function openEditor(tpl) {
   side = 0; history = []; redoStack = []; backManual = false; currentTpl = tpl;
   loading = true; canvas.clear(); canvas.backgroundColor = '#fff'; canvas.renderAll(); loading = false;
   if (!$('f-fields').children.length) renderForm($('f-fields'), scheduleRebuild);
-  syncForms(); renderPaletteChips(); translateDOM($('editor'));
+  backMode = 'auto'; syncForms(); renderPaletteChips(); renderBackModes(); translateDOM($('editor'));
   setMode(!!tpl);
   if (tpl) rebuild(); else pushHistory();
   renderSideButtons(); fit();
@@ -513,11 +536,11 @@ $('t-pdf').onclick = async () => {
 };
 
 // ---------- save / load ----------
-async function saveDesign({ isTemplate = false, name = null } = {}) {
+async function saveDesign({ isTemplate = false, name = null, order = null } = {}) {
   busy(true);
   try {
     const id = uuid();
-    const data = { sides: allSides().map(JSON.parse) };
+    const data = { sides: allSides().map(JSON.parse), order, fields: Object.fromEntries(Object.keys(DEFAULTS).filter(k => typeof S[k] === 'string').map(k => [k, S[k]])) };
     const blob = await (await fetch(renderPNG(Math.min(1, 800 / W)))).blob();
     const path = `previews/${id}.png`;
     const up = await sb.storage.from(BUCKET).upload(path, blob, { contentType: 'image/png' });
@@ -528,14 +551,35 @@ async function saveDesign({ isTemplate = false, name = null } = {}) {
     const url = new URL(`?product=${productKey}&design=${id}`, location.href).href;
     $('s-title').textContent = t(isTemplate ? 'تم حفظ القالب ✓' : 'تم حفظ التصميم ✓');
     $('s-hint').textContent = t(isTemplate ? 'سيظهر في معرض هذا المنتج ضمن "قوالب المطبعة المرفوعة"' : 'انسخ رقم التصميم وضعه في ملاحظات الطلب، أو شارك الرابط مع المطبعة');
-    $('s-id').textContent = id; $('s-url').textContent = url;
+    $('s-id').textContent = id + (order ? `  ·  ${order.qty} × ${t({ standard: 'عادي', premium: 'مميز', 'premium-plus': 'مميز سميك' }[order.paper])}` : ''); $('s-url').textContent = url;
     $('s-copy').onclick = () => { navigator.clipboard.writeText(url); toast(t('تم النسخ')); };
     $('m-saved').classList.remove('hidden');
     if (isTemplate) renderMine();
   } catch (e) { toast(t('فشل الحفظ: ') + e.message); }
   busy(false);
 }
-$('t-save').onclick = () => saveDesign();
+// ---- review step (VistaPrint-style) ----
+let reviewImgs = [], reviewSide = 0;
+async function openReview() {
+  busy(true);
+  reviewImgs = [];
+  await eachSide(() => { reviewImgs.push(renderPNG(Math.min(1, 900 / W), 'jpeg')); });
+  busy(false);
+  reviewSide = 0; $('r-img').src = reviewImgs[0];
+  const seg = $('r-sides'); seg.innerHTML = '';
+  if (reviewImgs.length > 1) ['الوجه الأمامي', 'الوجه الخلفي'].forEach((n, i) => { const b = document.createElement('button'); b.textContent = t(n); b.className = i === 0 ? 'on' : ''; b.onclick = () => { reviewSide = i; $('r-img').src = reviewImgs[i]; seg.querySelectorAll('button').forEach((x, j) => x.classList.toggle('on', j === i)); }; seg.appendChild(b); });
+  // fields still equal to the sample data
+  const fields = (FORM_FIELDS[P.family] || FORM_FIELDS.card).filter(([k]) => typeof S[k] === 'string' && S[k] && S[k] === DEFAULTS[k]);
+  $('r-warn').classList.toggle('hidden', !(simpleMode && currentTpl && fields.length));
+  $('r-warn-list').textContent = fields.map(([, l]) => t(l)).join(' · ');
+  $('r-clear').onclick = () => { fields.forEach(([k]) => { S[k] = ''; }); persistData(); syncForms(); rebuild(); openReview(); };
+  $('r-ok').checked = false; $('r-continue').disabled = true;
+  $('m-review').classList.remove('hidden');
+}
+$('r-ok').onchange = () => { $('r-continue').disabled = !$('r-ok').checked; };
+$('r-close').onclick = $('r-edit').onclick = () => $('m-review').classList.add('hidden');
+$('r-continue').onclick = () => { $('m-review').classList.add('hidden'); saveDesign({ order: { qty: +$('r-qty').value, paper: $('r-paper').value } }); };
+$('t-save').onclick = () => openReview();
 $('t-template').onclick = () => { const name = prompt(t('اسم القالب كما سيظهر في المعرض:'), pname(P) + t(' — قالب المطبعة')); if (name !== null) saveDesign({ isTemplate: true, name: name.trim() || null }); };
 
 async function loadDesign(id, asTemplate = false) {

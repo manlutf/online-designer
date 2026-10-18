@@ -191,6 +191,25 @@
   .u-item img{max-width:100%;max-height:100%}
   .u-item small{display:block;padding:6px 8px;font-size:11px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+  /* ========== review modal ========== */
+  .review-box{width:min(1000px,94vw);max-height:92vh;overflow:auto;padding:24px;text-align:start}
+  .r-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:24px}
+  @media (max-width:800px){.r-grid{grid-template-columns:1fr}}
+  .r-preview{display:flex;flex-direction:column;align-items:center;gap:14px}
+  .r-stage{width:100%;min-height:300px;background:var(--surface-2);border-radius:12px;display:grid;place-items:center;padding:28px}
+  .r-stage img{max-width:100%;max-height:360px;box-shadow:0 18px 40px rgba(17,24,39,.22)}
+  .r-side h3{margin:4px 0 4px;font-size:20px;font-weight:600}
+  .r-check{margin:10px 0 14px;padding-inline-start:18px;color:var(--ink-body);font-size:13px;line-height:1.9}
+  .r-warn{background:var(--danger-soft);border:1px solid #fecdd3;border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px}
+  .r-warn b{display:block;color:#9f1239;margin-bottom:4px}
+  .r-warn .btn{margin-top:10px}
+  .r-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+  .r-opts select{border:1px solid var(--line-2);border-radius:8px;padding:8px 10px;background:#fff;font-size:13px}
+  .r-approve{display:flex;align-items:center;gap:8px;font-size:13px;margin:6px 0 12px;cursor:pointer}
+  .r-side .btn{width:100%;justify-content:center;margin-bottom:8px}
+  .back-modes{display:flex;flex-wrap:wrap;gap:6px}
+  .back-modes .chip{padding:6px 10px}
+
   /* ========== modal / toast ========== */
   .modal{position:fixed;inset:0;background:rgba(107,114,128,.75);display:flex;align-items:center;justify-content:center;z-index:50}
   .modal .box{background:#fff;border-radius:16px;padding:24px;min-width:340px;max-width:92vw;text-align:center;box-shadow:var(--sh-lg);position:relative}
@@ -351,6 +370,7 @@
         <div class="intro">اكتب بياناتك وسيتحدث التصميم فوراً. التنسيق والمقاسات مضبوطة للطباعة تلقائياً.</div>
         <div class="sec" style="border-top:0;padding-top:0"><h5>الألوان</h5><div class="chips" id="f-palettes"></div></div>
         <div id="f-fields"></div>
+        <div class="sec" id="f-back-sec"><h5>الوجه الخلفي</h5><div class="back-modes" id="f-back"></div></div>
       </div>
       <div id="p-none">
         <h4>الخصائص</h4>
@@ -417,6 +437,35 @@
         <h3 id="u-title">ارفع صورتك</h3>
         <p class="hint" id="u-empty">ستظهر ملفاتك المرفوعة هنا بعد إضافتها</p>
         <div class="u-list" id="u-list"></div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<div id="m-review" class="modal hidden">
+  <div class="box review-box">
+    <button class="btn icon ghost close" id="r-close" title="إغلاق">✕</button>
+    <div class="r-grid">
+      <div class="r-preview">
+        <div class="r-stage"><img id="r-img" alt=""></div>
+        <div class="seg" id="r-sides"></div>
+      </div>
+      <aside class="r-side">
+        <h3>راجع تصميمك</h3>
+        <p class="hint">تأكد من التالي قبل المتابعة</p>
+        <ul class="r-check"><li>النص واضح وسهل القراءة</li><li>البيانات مكتوبة بشكل صحيح</li><li>الصور حادة وغير مشوشة</li></ul>
+        <div class="r-warn hidden" id="r-warn">
+          <b>بعض الحقول ما زالت بالنص التجريبي</b>
+          <div class="hint" id="r-warn-list"></div>
+          <button class="btn" id="r-clear" type="button">إخفاء هذه الحقول من التصميم</button>
+        </div>
+        <div class="r-opts">
+          <label class="field"><span>الكمية</span><select id="r-qty"><option>100</option><option>250</option><option>500</option><option>1000</option></select></label>
+          <label class="field"><span>نوع الورق</span><select id="r-paper"><option value="standard">عادي</option><option value="premium" selected>مميز</option><option value="premium-plus">مميز سميك</option></select></label>
+        </div>
+        <label class="r-approve"><input type="checkbox" id="r-ok"> راجعت التصميم وأوافق عليه</label>
+        <button class="btn primary" id="r-continue" disabled>متابعة وحفظ</button>
+        <button class="btn" id="r-edit">تعديل التصميم</button>
       </aside>
     </div>
   </div>

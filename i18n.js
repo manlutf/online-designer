@@ -47,6 +47,10 @@ const DICT = {
   'كحلي وذهبي': 'Navy & gold', 'أسود وذهبي': 'Black & gold', 'تركوازي': 'Teal', 'عنابي كلاسيكي': 'Classic burgundy', 'أخضر زيتوني': 'Olive green', 'مرجاني': 'Coral', 'بنفسجي ملكي': 'Royal purple', 'رمادي وبرتقالي': 'Slate & orange', 'نيون حمضي': 'Acid neon', 'باستيل ناعم': 'Soft pastel',
   'صورتك': 'Your photo', 'ستايل': 'styles', 'ألوان': 'colours',
   'شريط ساتان': 'Satin ribbon', 'موجة لامعة': 'Glossy wave', 'بلاطة الشعار': 'Logo tile', 'إطار وكتلة': 'Frame & block', 'نصف صورة': 'Half photo', 'ورق كرافت': 'Kraft paper', 'أفق المدينة': 'City skyline', 'أوراق خضراء': 'Green leaves', 'أيقونات أنيقة': 'Elegant icons', 'موجة البطل': 'Hero wave',
+  'راجع تصميمك': 'Review your design', 'تأكد من التالي قبل المتابعة': 'Double-check the following before you continue', 'النص واضح وسهل القراءة': 'Text is clear and easy to read', 'البيانات مكتوبة بشكل صحيح': 'Information is spelled correctly', 'الصور حادة وغير مشوشة': 'Images are sharp with no blurring',
+  'بعض الحقول ما زالت بالنص التجريبي': 'Some fields still contain the sample text', 'إخفاء هذه الحقول من التصميم': 'Hide these fields from the design', 'الكمية': 'Quantity', 'نوع الورق': 'Paper', 'عادي': 'Standard', 'مميز': 'Premium', 'مميز سميك': 'Premium plus',
+  'راجعت التصميم وأوافق عليه': 'I have reviewed and approve my design', 'متابعة وحفظ': 'Continue & save', 'تعديل التصميم': 'Edit my design', 'الوجه الخلفي': 'Back side', 'تلقائي (الشعار)': 'Auto (logo)', 'نسخة من الأمامي': 'Duplicate front', 'فارغ': 'Blank', 'رفع تصميم': 'Upload design',
+  'اضغط على الصورة لتغييرها': 'Click the photo to change it',
   // layout / style names
   'نظيف': 'Clean', 'شريط جانبي': 'Side band', 'شريط سفلي': 'Bottom bar', 'متوسط': 'Centred', 'زاوية': 'Corner', 'داكن فاخر': 'Dark luxe', 'قطري': 'Diagonal', 'دائرة': 'Circle', 'عصري ثنائي اللغة': 'Modern bilingual', 'كلاسيكي أنيق': 'Elegant classic',
   'رأس ملوّن': 'Coloured header', 'داكن': 'Dark', 'بسيط': 'Minimal', 'صورة علوية': 'Top photo', 'عنوان ضخم': 'Big headline', 'شريط قطري': 'Diagonal band', 'إطار أنيق': 'Elegant frame', 'عمود جانبي': 'Side column', 'شارة الخصم': 'Discount badge', 'شبكة صور': 'Photo grid',

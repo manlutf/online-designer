@@ -103,7 +103,7 @@ function kit(W, H, b, p) {
         const el = S.logoImg, box = 2 * r * u, sc = Math.min(box / el.width, box / el.height);
         return [new fabric.Image(el, { left: X(cx) - el.width * sc / 2, top: Y(cy) - el.height * sc / 2, scaleX: sc, scaleY: sc, data: { logo: true } })];
       }
-      return [k.circle(cx, cy, r, fill), new fabric.Textbox(letter, { left: X(cx) - r * u, top: Y(cy) - r * u * 0.72, width: 2 * r * u, fontSize: r * u * 1.2, fontFamily: p.fontEn, fontWeight: 700, fill: textFill, textAlign: 'center' })];
+      return [k.circle(cx, cy, r, fill, { data: { logo: true } }), new fabric.Textbox(letter, { left: X(cx) - r * u, top: Y(cy) - r * u * 0.72, width: 2 * r * u, fontSize: r * u * 1.2, fontFamily: p.fontEn, fontWeight: 700, fill: textFill, textAlign: 'center', data: { logo: true } })];
     },
     contacts(x, y, w, s, fill, o = {}) { return k.en(S.phone + '\n' + S.email + '\n' + S.web, { x, y, w, s, fill, lh: 1.5, ...o }); },
     grad(x, y, w, h, c1, c2, vertical = false) {
@@ -1146,7 +1146,7 @@ kit = function (W, H, b, p) {
     },
     // icon + text contact rows (phone / mail / web). align 'left' puts icons at the start (LTR); 'right' mirrors.
     contactRows(x, y, w, s, fill, iconColor, align = 'left', items) {
-      const rows = items || [['phone', S.phone], ['mail', S.email], ['globe', S.web]];
+      const rows = (items || [['phone', S.phone], ['mail', S.email], ['globe', S.web]]).filter(([, text]) => text && String(text).trim());
       const out = []; const lh = s * 2.1;
       rows.forEach(([ic, text], i) => {
         const yy = y + (lh * i) * u / H * 100, isz = s * 1.25;
@@ -1175,8 +1175,8 @@ kit = function (W, H, b, p) {
     },
     logoTile(cx, cy, r, fill, letter, textFill = '#fff') {   // rounded-square mark, honours the uploaded logo
       if (S.logoImg) return k.logo(cx, cy, r, fill, letter);
-      return [new fabric.Rect({ left: X(cx) - r * u, top: Y(cy) - r * u, width: 2 * r * u, height: 2 * r * u, rx: 0.45 * r * u, ry: 0.45 * r * u, fill, shadow: sh('rgba(0,0,0,.15)', 4, 1.5) }),
-        new fabric.Textbox(letter, { left: X(cx) - r * u, top: Y(cy) - r * u * 0.72, width: 2 * r * u, fontSize: r * u * 1.2, fontFamily: p.fontEn, fontWeight: 700, fill: textFill, textAlign: 'center' })];
+      return [new fabric.Rect({ left: X(cx) - r * u, top: Y(cy) - r * u, width: 2 * r * u, height: 2 * r * u, rx: 0.45 * r * u, ry: 0.45 * r * u, fill, shadow: sh('rgba(0,0,0,.15)', 4, 1.5), data: { logo: true } }),
+        new fabric.Textbox(letter, { left: X(cx) - r * u, top: Y(cy) - r * u * 0.72, width: 2 * r * u, fontSize: r * u * 1.2, fontFamily: p.fontEn, fontWeight: 700, fill: textFill, textAlign: 'center', data: { logo: true } })];
     },
   });
   // contacts(): icon rows as one group so every existing layout gets icons for free

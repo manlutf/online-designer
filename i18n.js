@@ -45,6 +45,8 @@ const DICT = {
   'عنوان الشهادة': 'Certificate title', 'اسم المكرَّم': 'Recipient name', 'سبب التكريم': 'Reason', 'التوقيع الأول': 'First signature', 'التوقيع الثاني': 'Second signature', 'عنوان القسيمة': 'Voucher title', 'القيمة': 'Value', 'الشروط': 'Terms', 'الكود': 'Code', 'الرسالة': 'Message', 'النص على الكوب': 'Mug text', 'النص على التيشيرت': 'T-shirt text',
   // palettes
   'كحلي وذهبي': 'Navy & gold', 'أسود وذهبي': 'Black & gold', 'تركوازي': 'Teal', 'عنابي كلاسيكي': 'Classic burgundy', 'أخضر زيتوني': 'Olive green', 'مرجاني': 'Coral', 'بنفسجي ملكي': 'Royal purple', 'رمادي وبرتقالي': 'Slate & orange', 'نيون حمضي': 'Acid neon', 'باستيل ناعم': 'Soft pastel',
+  'صورتك': 'Your photo', 'ستايل': 'styles', 'ألوان': 'colours',
+  'شريط ساتان': 'Satin ribbon', 'موجة لامعة': 'Glossy wave', 'بلاطة الشعار': 'Logo tile', 'إطار وكتلة': 'Frame & block', 'نصف صورة': 'Half photo', 'ورق كرافت': 'Kraft paper', 'أفق المدينة': 'City skyline', 'أوراق خضراء': 'Green leaves', 'أيقونات أنيقة': 'Elegant icons', 'موجة البطل': 'Hero wave',
   // layout / style names
   'نظيف': 'Clean', 'شريط جانبي': 'Side band', 'شريط سفلي': 'Bottom bar', 'متوسط': 'Centred', 'زاوية': 'Corner', 'داكن فاخر': 'Dark luxe', 'قطري': 'Diagonal', 'دائرة': 'Circle', 'عصري ثنائي اللغة': 'Modern bilingual', 'كلاسيكي أنيق': 'Elegant classic',
   'رأس ملوّن': 'Coloured header', 'داكن': 'Dark', 'بسيط': 'Minimal', 'صورة علوية': 'Top photo', 'عنوان ضخم': 'Big headline', 'شريط قطري': 'Diagonal band', 'إطار أنيق': 'Elegant frame', 'عمود جانبي': 'Side column', 'شارة الخصم': 'Discount badge', 'شبكة صور': 'Photo grid',

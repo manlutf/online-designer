@@ -35,7 +35,16 @@ const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : '10000000-1000-400
 const toast = msg => { const t = document.createElement('div'); t.id = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); };
 const busy = on => $('busy').classList.toggle('hidden', !on);
 // load every weight we use before measuring text: fabric caches glyph widths per font
-const fontsReady = () => Promise.all(FONTS.flatMap(f => ['400', '700', '900'].map(w => document.fonts.load(w + ' 16px "' + f + '"')))).then(() => { fabric.charWidthsCache = {}; }).catch(() => {});
+const fontsReady = async () => {
+  try {
+    // Google Fonts split each family into unicode-range subsets; load() must be given Arabic text or only the Latin subset loads
+    const sample = 'محمد العلي شركة الأفق 0123 Horizon Tech';
+    await Promise.all(FONTS.flatMap(f => ['400', '700', '900'].map(w => document.fonts.load(w + ' 16px "' + f + '"', sample))));
+    await document.fonts.ready;
+    for (let i = 0; i < 30 && !(document.fonts.check('700 16px "Cairo"', sample) && document.fonts.check('400 16px "Amiri"', sample)); i++) await new Promise(r => setTimeout(r, 100));
+  } catch (e) {}
+  fabric.charWidthsCache = {};
+};
 const show = id => { ['catalog', 'gallery', 'editor'].forEach(s => $(s).classList.toggle('hidden', s !== id)); $('nav').classList.toggle('hidden', id === 'editor'); };
 
 // ---------- custom fonts (bucket: fonts/) ----------
@@ -193,21 +202,32 @@ async function renderGallery() {
   const mkS = (label, st) => { const c = document.createElement('button'); c.className = 'chip' + (st === styleFilter ? ' on' : ''); c.textContent = label; c.onclick = () => { styleFilter = st; renderGallery(); }; styles.appendChild(c); };
   mkS(t('الكل'), null); [...new Set(TEMPLATES.map(x => x.name))].forEach(n => mkS(t(n), n));
   document.querySelectorAll('#g-grid .tpl:not(.blank):not(.ai):not(.up)').forEach(e => e.remove());
-  const list = TEMPLATES.filter(t => (!paletteFilter || t.palette === paletteFilter) && (!styleFilter || t.name === styleFilter));
+  // one card per layout, with a colour dot per palette (click a dot = live re-render of that variant)
+  const layouts = [...new Set(TEMPLATES.map(x => x.name))].filter(n => !styleFilter || n === styleFilter);
+  $('g-count').textContent = `${layouts.length} ${t('ستايل')} × ${PALETTES.length} ${t('ألوان')} = ${TEMPLATES.length} ${t('قالباً')} · ${P.w}×${P.h} ${t('مم')}`;
   const sc = new fabric.StaticCanvas(null, { width: W, height: H });
   const mult = Math.min(360 / W, 360 / H);
+  const thumb = tpl => { const { bg, objects } = tpl.build(W, H, B); sc.clear(); sc.backgroundColor = bg; sc.add(...objects); sc.renderAll(); return sc.toDataURL({ multiplier: mult }); };
   const run = ++renderGallery.run;
-  for (let i = 0; i < list.length; i++) {
+  for (let i = 0; i < layouts.length; i++) {
     if (run !== renderGallery.run) return;
-    const t_ = list[i];
-    const { bg, objects } = t_.build(W, H, B);
-    sc.clear(); sc.backgroundColor = bg; sc.add(...objects); sc.renderAll();
+    const name = layouts[i];
+    const variants = TEMPLATES.filter(x => x.name === name);
+    let cur = variants.find(v => v.palette === paletteFilter) || variants[0];
     const el = document.createElement('div');
     el.className = 'tpl';
-    el.innerHTML = `<div class="th" style="--ar:${W}/${H}"><img src="${sc.toDataURL({ multiplier: mult })}"></div><div class="n"><span>${t(t_.name)}</span><span><i style="background:${t_.swatch[0]}"></i><i style="background:${t_.swatch[1]}"></i></span></div>`;
-    el.onclick = () => openEditor(t_);
+    el.innerHTML = `<div class="th" style="--ar:${W}/${H}"><img src="${thumb(cur)}"></div><div class="n"><span>${t(name)}</span></div><div class="dots"></div>`;
+    const img = el.querySelector('img'), dots = el.querySelector('.dots');
+    variants.forEach(v => {
+      const d = document.createElement('button'); d.className = 'dot' + (v === cur ? ' on' : ''); d.title = t(v.palette);
+      d.style.background = `linear-gradient(90deg, ${v.paletteObj.dark} 50%, ${v.paletteObj.accent} 50%)`;
+      d.onclick = e => { e.stopPropagation(); cur = v; img.src = thumb(v); dots.querySelectorAll('.dot').forEach(x => x.classList.toggle('on', x === d)); };
+      dots.appendChild(d);
+    });
+    el.querySelector('.th').onclick = () => openEditor(cur);
+    el.querySelector('.n').onclick = () => openEditor(cur);
     $('g-grid').appendChild(el);
-    if (i % 4 === 3) await new Promise(r => setTimeout(r, 0));
+    if (i % 3 === 2) await new Promise(r => setTimeout(r, 0));
   }
 }
 renderGallery.run = 0;

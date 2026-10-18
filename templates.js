@@ -1112,6 +1112,212 @@ FAMILIES.tshirt.push(
   ] }; } },
 );
 
+// ===== Premium layer (VistaPrint-grade research, Oct 2026) =====
+// Icons, ribbons, waves, textures, motifs and photo-like placeholders shared by every family.
+const ICONS = {
+  phone: 'M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 6a2 2 0 0 1 2-2z',
+  mail: 'M3 6h18v12H3z M3 6l9 7 9-7',
+  globe: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M3 12h18 M12 3c3 3 3 15 0 18 M12 3c-3 3-3 15 0 18',
+  pin: 'M12 21s-6-5.3-6-11a6 6 0 0 1 12 0c0 5.7-6 11-6 11z M10 10a2 2 0 1 0 4 0a2 2 0 1 0-4 0',
+  image: 'M3 5h18v14H3z M3 15l5-5 4 4 3-3 6 6 M15 8a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0',
+  leaf: 'M50 95 C20 70 10 40 50 5 C90 40 80 70 50 95 Z M50 90 L50 35',
+  blob1: 'M50 5 C75 0 100 20 95 50 C90 80 70 100 45 95 C20 90 0 70 5 45 C10 20 30 10 50 5 Z',
+  blob2: 'M40 8 C70 -5 105 25 95 55 C88 80 60 105 30 92 C5 82 -5 50 10 28 C18 16 28 12 40 8 Z',
+};
+const SKYLINE = [[0, 100], [0, 60], [8, 60], [8, 45], [16, 45], [16, 70], [24, 70], [24, 30], [34, 30], [34, 55], [42, 55], [42, 20], [50, 20], [50, 40], [60, 40], [60, 65], [68, 65], [68, 50], [78, 50], [78, 35], [86, 35], [86, 60], [94, 60], [94, 75], [100, 75], [100, 100]];
+
+const _kit = kit;
+kit = function (W, H, b, p) {
+  const k = _kit(W, H, b, p);
+  const { u, X, Y } = k;
+  const sh = (c = 'rgba(0,0,0,.18)', blur = 6, oy = 2) => new fabric.Shadow({ color: c, blur: blur * u, offsetX: 0, offsetY: oy * u });
+  Object.assign(k, {
+    sh,
+    icon(name, x, y, size, color, o = {}) {   // stroke icon from a 24-box
+      const path = new fabric.Path(ICONS[name], { fill: 'transparent', stroke: color, strokeWidth: 1.8, strokeLineCap: 'round', strokeLineJoin: 'round', ...o });
+      const sc = (size * u) / 24; path.set({ scaleX: sc, scaleY: sc, left: X(x), top: Y(y) }); return path;
+    },
+    motif(name, x, y, size, fill, o = {}) {    // filled motif from a 100-box (leaf, blob)
+      const path = new fabric.Path(ICONS[name], { fill, stroke: o.stroke || null, strokeWidth: o.strokeWidth || 0, ...o });
+      const sc = (size * u) / 100; path.set({ scaleX: sc, scaleY: sc, left: X(x), top: Y(y) }); return path;
+    },
+    skyline(x, y, w, h, fill, o = {}) {
+      return new fabric.Polygon(SKYLINE.map(([px, py]) => ({ x: X(x) + px / 100 * X(w), y: Y(y) + py / 100 * Y(h) })), { fill, ...o });
+    },
+    // icon + text contact rows (phone / mail / web). align 'left' puts icons at the start (LTR); 'right' mirrors.
+    contactRows(x, y, w, s, fill, iconColor, align = 'left', items) {
+      const rows = items || [['phone', S.phone], ['mail', S.email], ['globe', S.web]];
+      const out = []; const lh = s * 2.1;
+      rows.forEach(([ic, text], i) => {
+        const yy = y + (lh * i) * u / H * 100, isz = s * 1.25;
+        if (align === 'left') { out.push(k.icon(ic, x, yy + 0.2 * s * u / H * 100, isz, iconColor), k.en(text, { x: x + isz * 1.5 * u / W * 100, y: yy, w: w - isz * 1.5 * u / W * 100, s, fill })); }
+        else { out.push(k.icon(ic, x + w - isz * u / W * 100, yy + 0.2 * s * u / H * 100, isz, iconColor), k.en(text, { x, y: yy, w: w - isz * 1.5 * u / W * 100, s, fill, align: 'right' })); }
+      });
+      return out;
+    },
+    ribbon(x, y, w, h, fill, dark) {   // banner with a folded end and soft shadow
+      const r = new fabric.Rect({ left: X(x), top: Y(y), width: X(w), height: Y(h), fill, shadow: sh('rgba(0,0,0,.25)', 5, 2) });
+      const fold = new fabric.Polygon([{ x: X(x), y: Y(y) + Y(h) }, { x: X(x) + 3 * u, y: Y(y) + Y(h) }, { x: X(x), y: Y(y) + Y(h) + 2.2 * u }], { fill: dark });
+      return [fold, r];
+    },
+    wave(y, amp, fill, fromTop = true, o = {}) {   // area above (or below) a smooth wave edge
+      const yy = Y(y), a = amp * u;
+      const d = fromTop
+        ? `M 0 0 L ${W} 0 L ${W} ${yy} C ${W * 0.75} ${yy - a} ${W * 0.25} ${yy + a} 0 ${yy} Z`
+        : `M 0 ${H} L ${W} ${H} L ${W} ${yy} C ${W * 0.75} ${yy + a} ${W * 0.25} ${yy - a} 0 ${yy} Z`;
+      return new fabric.Path(d, { fill, ...o });
+    },
+    hatch(x, y, w, h, gap, stroke, opacity = 0.35, t = 0.25) {   // diagonal texture clipped to a box
+      const gw = X(w), gh = Y(h), items = [];
+      for (let o = -gh; o < gw; o += gap * u) items.push(new fabric.Line([o, gh, o + gh, 0], { stroke, strokeWidth: t * u }));
+      const g = new fabric.Group(items, { left: X(x), top: Y(y), opacity });
+      g.clipPath = new fabric.Rect({ left: -gw / 2, top: -gh / 2, width: gw, height: gh }); return g;
+    },
+    logoTile(cx, cy, r, fill, letter, textFill = '#fff') {   // rounded-square mark, honours the uploaded logo
+      if (S.logoImg) return k.logo(cx, cy, r, fill, letter);
+      return [new fabric.Rect({ left: X(cx) - r * u, top: Y(cy) - r * u, width: 2 * r * u, height: 2 * r * u, rx: 0.45 * r * u, ry: 0.45 * r * u, fill, shadow: sh('rgba(0,0,0,.15)', 4, 1.5) }),
+        new fabric.Textbox(letter, { left: X(cx) - r * u, top: Y(cy) - r * u * 0.72, width: 2 * r * u, fontSize: r * u * 1.2, fontFamily: p.fontEn, fontWeight: 700, fill: textFill, textAlign: 'center' })];
+    },
+  });
+  // contacts(): icon rows as one group so every existing layout gets icons for free
+  k.contacts = (x, y, w, s, fill, o = {}) => {
+    const align = o.align === 'right' ? 'right' : 'left';
+    const g = new fabric.Group(k.contactRows(x, y, w, s * 0.95, fill, o.iconColor || p.accent, align), { data: { contacts: true } });
+    return g;
+  };
+  // photo placeholder: stylised "art" so thumbnails look designed, swapped for the customer's photo
+  const baseImg = k.img;
+  k.img = (x, y, w, h, o = {}) => {
+    if (S.photoImg) return baseImg(x, y, w, h, o);
+    const gw = X(w), gh = Y(h), items = [
+      new fabric.Rect({ left: 0, top: 0, width: gw, height: gh, fill: o.fill || p.light, rx: (o.rx || 0) * u, ry: (o.rx || 0) * u }),
+      new fabric.Circle({ left: gw * 0.55, top: -gh * 0.35, radius: gh * 0.55, fill: p.accent, opacity: 0.22 }),
+      new fabric.Circle({ left: -gw * 0.15, top: gh * 0.45, radius: gh * 0.5, fill: p.dark, opacity: 0.12 }),
+    ];
+    const ic = new fabric.Path(ICONS.image, { fill: 'transparent', stroke: o.textFill || p.sub, strokeWidth: 1.6, strokeLineCap: 'round', strokeLineJoin: 'round' });
+    const isz = Math.min(gw, gh) * 0.22; ic.set({ scaleX: isz / 24, scaleY: isz / 24, left: gw / 2 - isz / 2, top: gh / 2 - isz / 2 - gh * 0.04 });
+    items.push(ic, new fabric.Textbox(t('صورتك'), { left: 0, top: gh / 2 + isz / 2, width: gw, fontSize: Math.min(2.6 * u, gw / 10), fontFamily: 'Cairo', fill: o.textFill || p.sub, textAlign: 'center', direction: 'rtl' }));
+    const g = new fabric.Group(items, { left: X(x), top: Y(y), data: { placeholder: true } });
+    g.clipPath = new fabric.Rect({ left: -gw / 2, top: -gh / 2, width: gw, height: gh, rx: (o.rx || 0) * u, ry: (o.rx || 0) * u });
+    return g;
+  };
+  return k;
+};
+
+// ---- premium business-card layouts (shown first in the gallery)
+FAMILIES.card.unshift(
+  { name: 'شريط ساتان', fn: k => { const { p, mx, my } = k; return { bg: p.bg, objects: [
+    k.rect(0, 0, 9, 100, p.light), k.hatch(0, 0, 9, 100, 2.2, p.sub, 0.25),
+    k.txt(S.name, { x: 14, y: my + 6, w: 86 - mx, s: 10, weight: 700, fill: p.accent, align: 'left' }),
+    k.txt(S.title, { x: 14, y: my + 20, w: 86 - mx, s: 4.6, fill: p.sub, align: 'left' }),
+    ...k.ribbon(11, 40, 89, 16, p.accent, p.dark),
+    k.txt(S.company, { x: 14, y: 43, w: 86 - mx, s: 7, weight: 700, fill: '#fff' }),
+    k.txt(S.slogan, { x: 14, y: 58, w: 86 - mx, s: 3.8, fill: p.sub }),
+    ...k.contactRows(14, 68, 42, 3.4, p.sub, p.accent, 'left'),
+    k.txt(S.address, { x: 56, y: 68, w: 44 - mx, s: 3.4, fill: p.sub }),
+  ] }; } },
+  { name: 'موجة لامعة', fn: k => { const { p, mx, my } = k; return { bg: p.bg, objects: [
+    k.wave(38, 7, p.dark, true), k.wave(34, 7, p.accent, true, { opacity: 0.85 }),
+    k.txt(S.company, { x: mx, y: my + 4, w: 100 - 2 * mx, s: 7.5, weight: 700, fill: '#fff' }),
+    k.txt(S.slogan, { x: mx, y: my + 16, w: 100 - 2 * mx, s: 3.8, fill: '#ffffffcc' }),
+    k.txt(S.name, { x: mx, y: 50, w: 100 - 2 * mx, s: 8, weight: 700 }),
+    k.txt(S.title, { x: mx, y: 62, w: 100 - 2 * mx, s: 4.2, fill: p.accent }),
+    ...k.contactRows(mx, 74, 46, 3.3, p.sub, p.accent, 'left'),
+    k.txt(S.address, { x: 50, y: 74, w: 50 - mx, s: 3.3, fill: p.sub }),
+  ] }; } },
+  { name: 'بلاطة الشعار', fn: k => { const { p, mx, my } = k; return { bg: p.bg, objects: [
+    k.rect(0, 0, 38, 100, p.dark),
+    ...k.logoTile(19, 42, 10, p.accent, 'H'),
+    k.txt(S.company, { x: 3, y: 62, w: 32, s: 5.2, weight: 700, fill: '#fff', align: 'center' }),
+    k.txt(S.slogan, { x: 3, y: 73, w: 32, s: 3.2, fill: p.accent, align: 'center' }),
+    k.txt(S.name, { x: 43, y: my + 8, w: 57 - mx, s: 9, weight: 700 }),
+    k.txt(S.title, { x: 43, y: my + 21, w: 57 - mx, s: 4.4, fill: p.accent }),
+    k.hline(100 - mx - 14, my + 32, 14, 0.6, p.light),
+    ...k.contactRows(43, 50, 57 - mx, 3.4, p.sub, p.accent, 'right'),
+  ] }; } },
+  { name: 'إطار وكتلة', fn: k => { const { p, mx, my } = k; return { bg: p.bg, objects: [
+    k.frame(mx - 2, my - 2, 100 - 2 * mx + 4, 36, p.dark, 0.5),
+    k.txt(S.company, { x: mx, y: my + 7, w: 100 - 2 * mx, s: 6.5, weight: 700, align: 'center', }),
+    k.rect(mx - 2, my + 38, 100 - 2 * mx + 4, 100 - 2 * my - 36, p.dark),
+    k.txt(S.name, { x: mx + 2, y: my + 43, w: 50, s: 6.5, weight: 700, fill: '#fff', align: 'left' }),
+    k.txt(S.title, { x: mx + 2, y: my + 54, w: 50, s: 3.6, fill: p.accent, align: 'left' }),
+    k.en(S.phone + '\n' + S.email, { x: mx + 2, y: my + 64, w: 50, s: 3.2, fill: '#e5e7eb', lh: 1.5 }),
+    k.en(S.web.toUpperCase(), { x: 52, y: my + 44, w: 48 - mx - 2, s: 3.2, fill: '#fff', align: 'right', charSpacing: 120 }),
+    k.txt(S.address, { x: 52, y: my + 54, w: 48 - mx - 2, s: 3.2, fill: '#e5e7eb' }),
+  ] }; } },
+  { name: 'نصف صورة', fn: k => { const { p, mx, my } = k; return { bg: p.bg, objects: [
+    k.img(0, 0, 46, 100),
+    k.rect(46, 0, 1.2, 100, p.accent),
+    ...k.logoTile(56, my + 12, 5, p.accent, 'H'),
+    k.txt(S.company, { x: 62, y: my + 7, w: 38 - mx, s: 4.4, weight: 700 }),
+    k.txt(S.name, { x: 51, y: 38, w: 49 - mx, s: 7.5, weight: 700 }),
+    k.txt(S.title, { x: 51, y: 50, w: 49 - mx, s: 3.8, fill: p.sub }),
+    ...k.contactRows(51, 62, 49 - mx, 3.1, p.sub, p.accent, 'right'),
+  ] }; } },
+  { name: 'ورق كرافت', fn: k => { const { p, mx, my } = k; return { bg: '#efe6d8', objects: [
+    k.hatch(0, 0, 100, 100, 1.6, '#b9a98f', 0.18, 0.2),
+    k.frame(mx - 1, my - 2, 100 - 2 * mx + 2, 100 - 2 * my + 4, '#5b4a36', 0.6, { strokeDashArray: [4, 3] }),
+    k.motif('leaf', 100 - mx - 14, my + 2, 13, '#7a8c5a', { opacity: 0.9 }),
+    k.txt(S.company, { x: mx, y: my + 8, w: 70, s: 7.5, weight: 700, fill: '#3f3324', align: 'left', font: 'Amiri' }),
+    k.txt(S.slogan, { x: mx, y: my + 22, w: 70, s: 3.6, fill: '#7a6a55', align: 'left' }),
+    k.hline(mx, 48, 30, 0.5, '#7a8c5a'),
+    k.txt(S.name + '  ·  ' + S.title, { x: mx, y: 54, w: 100 - 2 * mx, s: 4.2, fill: '#3f3324', align: 'left' }),
+    ...k.contactRows(mx, 66, 50, 3.3, '#7a6a55', '#7a8c5a', 'left'),
+    k.txt(S.address, { x: 55, y: 66, w: 45 - mx, s: 3.3, fill: '#7a6a55' }),
+  ] }; } },
+  { name: 'أفق المدينة', fn: k => { const { p, mx, my } = k; return { bg: p.bg, objects: [
+    k.rect(0, 62, 100, 38, p.dark), k.skyline(0, 40, 100, 24, p.dark, { opacity: 0.9 }), k.rect(0, 62, 100, 0.8, p.accent),
+    ...k.logoTile(mx + 6, my + 10, 6, p.accent, 'H'),
+    k.txt(S.company, { x: mx + 14, y: my + 5, w: 60, s: 5.5, weight: 700, align: 'left' }),
+    k.txt(S.slogan, { x: mx + 14, y: my + 14, w: 60, s: 3.4, fill: p.sub, align: 'left' }),
+    k.txt(S.name, { x: mx, y: 68, w: 60, s: 6.5, weight: 700, fill: '#fff', align: 'left' }),
+    k.txt(S.title, { x: mx, y: 79, w: 60, s: 3.6, fill: p.accent, align: 'left' }),
+    k.en(S.phone + '\n' + S.web, { x: 58, y: 70, w: 42 - mx, s: 3.3, fill: '#e5e7eb', align: 'right', lh: 1.5 }),
+  ] }; } },
+  { name: 'أوراق خضراء', fn: k => { const { p, mx, my } = k; return { bg: p.bg, objects: [
+    k.motif('blob1', -10, -30, 48, p.light), k.motif('blob2', 70, 55, 44, p.accent, { opacity: 0.18 }),
+    k.motif('leaf', 84, 6, 11, p.accent), k.motif('leaf', 90, 16, 8, p.dark, { opacity: 0.7, angle: 35 }),
+    k.txt(S.company, { x: mx, y: my + 6, w: 60, s: 6.5, weight: 700, align: 'left' }),
+    k.txt(S.slogan, { x: mx, y: my + 17, w: 60, s: 3.6, fill: p.accent, align: 'left' }),
+    k.txt(S.name, { x: mx, y: 46, w: 100 - 2 * mx, s: 8, weight: 700, align: 'left' }),
+    k.txt(S.title, { x: mx, y: 58, w: 100 - 2 * mx, s: 4, fill: p.sub, align: 'left' }),
+    ...k.contactRows(mx, 72, 48, 3.3, p.sub, p.accent, 'left'),
+    k.txt(S.address, { x: 52, y: 72, w: 48 - mx, s: 3.3, fill: p.sub }),
+  ] }; } },
+  { name: 'أيقونات أنيقة', fn: k => { const { p, mx, my } = k; return { bg: p.bg, objects: [
+    k.rect(0, 0, 100, 3, p.accent),
+    k.txt(S.name, { x: mx, y: my + 8, w: 100 - 2 * mx, s: 10, weight: 700 }),
+    k.txt(S.title, { x: mx, y: my + 23, w: 100 - 2 * mx, s: 4.4, fill: p.accent }),
+    k.hline(mx, 48, 100 - 2 * mx, 0.3, p.light),
+    ...k.contactRows(mx, 54, 44, 3.4, p.sub, p.accent, 'left'),
+    k.icon('pin', 100 - mx - 4.2, 54.3, 4.2, p.accent), k.txt(S.address, { x: 50, y: 54, w: 50 - mx - 6, s: 3.4, fill: p.sub }),
+    k.txt(S.company, { x: 50, y: 70, w: 50 - mx, s: 4.4, weight: 700, fill: p.dark }),
+  ] }; } },
+);
+
+// ---- premium flyer layouts
+FAMILIES.poster.unshift(
+  { name: 'موجة البطل', fn: k => { const { p, mx } = k; return { bg: p.bg, objects: [
+    k.img(0, 0, 100, 46), k.wave(46, 5, p.bg, false, {}), k.wave(44, 5, p.accent, false, { opacity: 0.9 }), k.rect(0, 50, 100, 50, p.bg),
+    k.txt(S.headline, { x: mx, y: 54, w: 100 - 2 * mx, s: 11, weight: 900, lh: 1.1, lines: 2 }),
+    k.txt(S.sub, { x: mx, y: 68, w: 100 - 2 * mx, s: 5, fill: p.accent, weight: 700 }),
+    k.txt(S.body, { x: mx, y: 75, w: 100 - 2 * mx, s: 3.8, fill: p.sub, lh: 1.5 }),
+    ...k.button(100 - mx - 34, 86, 34, 6.5, S.cta, p.dark, '#fff', 4.6),
+    ...k.contactRows(mx, 86, 40, 3, p.sub, p.accent, 'left', [['phone', S.phone], ['globe', S.web]]),
+  ] }; } },
+  { name: 'شريط ساتان', fn: k => { const { p, mx } = k; return { bg: p.bg, objects: [
+    k.img(mx, 6, 100 - 2 * mx, 34, { rx: 2 }),
+    ...k.ribbon(mx - 2, 36, 100 - 2 * mx + 4, 9, p.accent, p.dark),
+    k.txt(S.headline, { x: mx + 2, y: 37.5, w: 100 - 2 * mx - 4, s: 6, weight: 700, fill: '#fff' }),
+    k.txt(S.sub, { x: mx, y: 50, w: 100 - 2 * mx, s: 5.2, weight: 700 }),
+    k.txt(S.body, { x: mx, y: 57, w: 100 - 2 * mx, s: 3.8, fill: p.sub, lh: 1.55 }),
+    ...S.bullets.map((b, i) => k.txt('✓  ' + b, { x: mx, y: 69 + i * 5.5, w: 100 - 2 * mx, s: 4 })),
+    k.rect(0, 90, 100, 10, p.dark),
+    ...k.contactRows(mx, 92.5, 60, 3.2, '#fff', p.accent, 'left', [['phone', S.phone], ['globe', S.web]]).slice(0, 2),
+    k.icon('globe', 50, 92.7, 4, p.accent), k.en(S.web, { x: 55, y: 92.5, w: 45 - mx, s: 3.2, fill: '#fff' }),
+  ] }; } },
+);
+
 // Auto-generated back side for two-sided products: logo / company centred on the dark colour.
 function buildBack(W, H, b, p) {
   const k = kit(W, H, b, p);

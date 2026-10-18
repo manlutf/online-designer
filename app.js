@@ -291,7 +291,7 @@ function fit() {
   const z = Math.min(availW / W, (st.clientHeight - 56 - 24) / H, 3);
   if (!(z > 0)) return;
   canvas.setZoom(z); canvas.setDimensions({ width: W * z, height: H * z });
-  const img = $('side-img'); img.style.width = (W * z) + 'px'; img.style.height = (H * z) + 'px';
+  const img = $('side-img'); img.style.width = (W * z) + 'px'; img.style.height = (H * z) + 'px'; scheduleOther();
   $('t-zoom').textContent = Math.round(z * MM / 3.78 * 100) + '%';   // 100% = real print size on a 96dpi screen (3.78 px/mm)
 }
 
@@ -350,8 +350,8 @@ function renderOtherSide() {
   $('side-active').style.order = side; card.style.order = o;
   otherSC = otherSC || new fabric.StaticCanvas(null, { width: W, height: H });
   const json = sides[o] || JSON.stringify({ version: fabric.version, objects: [], background: '#fff' });
-  const z = Math.min(1, 900 / W);
-  otherSC.loadFromJSON(json, () => { otherSC.renderAll(); $('side-img').src = otherSC.toDataURL({ format: 'jpeg', quality: 0.85, multiplier: z }); });
+  const z = Math.max(1, canvas.getZoom() * (window.devicePixelRatio || 1));   // same sharpness as the live canvas
+  otherSC.loadFromJSON(json, () => { otherSC.renderAll(); $('side-img').src = otherSC.toDataURL({ format: 'png', multiplier: z }); });
 }
 const scheduleOther = () => { clearTimeout(otherTimer); otherTimer = setTimeout(renderOtherSide, 250); };
 $('side-other').onclick = () => switchSide(1 - side);

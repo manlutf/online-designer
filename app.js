@@ -30,6 +30,8 @@ const FONTS = ['Cairo', 'Tajawal', 'Almarai', 'Amiri', 'Poppins', 'Montserrat', 
 const JSON_PROPS = ['data'];
 if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+// crypto.randomUUID is unavailable on plain-http LAN addresses (non-secure context) → fallback
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)));
 const toast = msg => { const t = document.createElement('div'); t.id = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); };
 const busy = on => $('busy').classList.toggle('hidden', !on);
 // load every weight we use before measuring text: fabric caches glyph widths per font
@@ -377,7 +379,7 @@ async function importPdf(file) {
 }
 
 // ---------- QR upload from phone ----------
-const session = crypto.randomUUID();
+const session = uuid();
 let qrMade = false;
 sb.channel('upload:' + session).on('broadcast', { event: 'image' }, async ({ payload }) => {
   $('m-qr').classList.add('hidden'); toast('وصلت الصورة من الجوال ✓');
@@ -458,7 +460,7 @@ $('t-pdf').onclick = async () => {
 async function saveDesign({ isTemplate = false, name = null } = {}) {
   busy(true);
   try {
-    const id = crypto.randomUUID();
+    const id = uuid();
     const data = { sides: allSides().map(JSON.parse) };
     const blob = await (await fetch(renderPNG(Math.min(1, 800 / W)))).blob();
     const path = `previews/${id}.png`;

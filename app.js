@@ -68,7 +68,7 @@ async function renderCatalog() {
   Object.entries(PRODUCTS).forEach(([k, v]) => {
     const el = document.createElement('a');
     el.className = 'pcard'; el.href = '?product=' + k;
-    el.innerHTML = `<div class="thumb"></div><div class="meta"><b>${v.icon} ${v.name}</b><small>${v.w} × ${v.h} مم${v.sides > 1 ? ' · وجهان' : ''}</small><span class="cnt">${TEMPLATE_COUNT[k]} قالباً</span></div>`;
+    el.innerHTML = `<div class="thumb"></div><div class="meta"><b>${v.icon} ${pname(v)}</b><small>${v.w} × ${v.h} ${t('مم')}${v.sides > 1 ? t(' · وجهان') : ''}</small><span class="cnt">${TEMPLATE_COUNT[k]} ${t('قالباً')}</span></div>`;
     $('pgrid').appendChild(el); cards[k] = el;
   });
   if ($('catalog').classList.contains('hidden')) return;
@@ -102,17 +102,17 @@ function renderForm(root, onChange) {
   fields.forEach(([key, label]) => {
     const wrap = document.createElement('label'); wrap.className = 'field';
     const long = LONG_FIELDS.includes(key);
-    wrap.innerHTML = `<span>${label}</span>` + (long ? `<textarea rows="3" data-key="${key}"></textarea>` : `<input type="text" data-key="${key}">`);
+    wrap.innerHTML = `<span>${t(label)}</span>` + (long ? `<textarea rows="3" data-key="${key}"></textarea>` : `<input type="text" data-key="${key}">`);
     const inp = wrap.querySelector('[data-key]'); inp.value = S[key] || '';
     inp.oninput = () => { S[key] = inp.value; persistData(); onChange(); };
     root.appendChild(wrap);
   });
   // logo + photo
   const media = document.createElement('div'); media.className = 'media-row';
-  media.innerHTML = `<label class="btn"><svg class="i"><use href="#i-image"/></svg> ${S.logoImg ? 'تغيير الشعار' : 'رفع الشعار'}<input type="file" accept="image/*" data-media="logoImg" class="hidden"></label>
-    <label class="btn"><svg class="i"><use href="#i-image"/></svg> ${S.photoImg ? 'تغيير الصورة' : 'رفع صورة'}<input type="file" accept="image/*" data-media="photoImg" class="hidden"></label>`;
-  media.querySelectorAll('input[type=file]').forEach(inp => inp.onchange = async e => { const f = e.target.files[0]; if (!f) return; S[inp.dataset.media] = await fileToImage(f); e.target.value = ''; syncForms(); onChange(); });
-  const reset = document.createElement('button'); reset.className = 'btn ghost'; reset.type = 'button'; reset.textContent = 'إعادة البيانات الافتراضية';
+  media.innerHTML = `<button type="button" class="btn" data-media="logo"><svg class="i"><use href="#i-image"/></svg> ${t(S.logoImg ? 'تغيير الشعار' : 'رفع الشعار')}</button>
+    <button type="button" class="btn" data-media="photo"><svg class="i"><use href="#i-image"/></svg> ${t(S.photoImg ? 'تغيير الصورة' : 'رفع صورة')}</button>`;
+  media.querySelectorAll('[data-media]').forEach(b => b.onclick = () => openUpload(b.dataset.media));
+  const reset = document.createElement('button'); reset.className = 'btn ghost'; reset.type = 'button'; reset.textContent = t('إعادة البيانات الافتراضية');
   reset.onclick = () => { Object.keys(DEFAULTS).forEach(k => { S[k] = DEFAULTS[k]; }); persistData(); syncForms(); renderForm(root, onChange); onChange(); };
   media.appendChild(reset);
   root.appendChild(media);
@@ -140,9 +140,9 @@ function renderPaletteChips() {
   const root = $('f-palettes'); root.innerHTML = '';
   if (!currentTpl) return;
   PALETTES.forEach(p => {
-    const c = document.createElement('button'); c.className = 'chip' + (p.name === currentTpl.palette ? ' on' : ''); c.title = p.name;
+    const c = document.createElement('button'); c.className = 'chip' + (p.name === currentTpl.palette ? ' on' : ''); c.title = t(p.name);
     c.innerHTML = `<i style="background:${p.accent}"></i><i style="background:${p.dark}"></i>`;
-    c.onclick = () => { const t = TEMPLATES.find(x => x.name === currentTpl.name && x.palette === p.name); if (t) { currentTpl = t; $('t-name').textContent = P.name + ' — ' + t.name; renderPaletteChips(); rebuild(); } };
+    c.onclick = () => { const tp = TEMPLATES.find(x => x.name === currentTpl.name && x.palette === p.name); if (tp) { currentTpl = tp; $('t-name').textContent = pname(P) + ' — ' + t(tp.name); renderPaletteChips(); rebuild(); } };
     root.appendChild(c);
   });
 }
@@ -161,7 +161,8 @@ function setMode(simple) {
 
 // ---------- gallery ----------
 let TEMPLATES = [], paletteFilter = null, styleFilter = null;
-Object.entries(PRODUCTS).forEach(([k, v]) => $('g-product').add(new Option(v.icon + ' ' + v.name, k, false, k === productKey)));
+const pname = v => (LANG === 'en' && v.nameEn) ? v.nameEn : v.name;
+Object.entries(PRODUCTS).forEach(([k, v]) => $('g-product').add(new Option(v.icon + ' ' + pname(v), k, false, k === productKey)));
 $('g-product').onchange = e => location.search = '?product=' + e.target.value;
 $('g-back').onclick = () => location.search = '';
 
@@ -171,7 +172,7 @@ async function renderMine() {
   $('g-mine').innerHTML = '';
   (data || []).forEach(d => {
     const el = document.createElement('div'); el.className = 'tpl';
-    el.innerHTML = `<div class="th" style="--ar:${W}/${H}"><img src="${d.preview_url}"></div><div class="n"><span>${d.name || 'قالب المطبعة'}</span><span class="tag">مرفوع</span></div>`;
+    el.innerHTML = `<div class="th" style="--ar:${W}/${H}"><img src="${d.preview_url}"></div><div class="n"><span>${d.name || t('قالب المطبعة')}</span><span class="tag">${t('مرفوع')}</span></div>`;
     el.onclick = () => loadDesign(d.id, true);
     $('g-mine').appendChild(el);
   });
@@ -181,16 +182,16 @@ async function renderGallery() {
   await fontsReady();
   if (!$('g-form').children.length) renderForm($('g-form'), () => { clearTimeout(galleryTimer); galleryTimer = setTimeout(() => renderGallery(), 400); });
   TEMPLATES = templatesFor(P);
-  $('g-title').textContent = P.name;
-  $('g-count').textContent = `${TEMPLATES.length} قالباً · ${P.w}×${P.h} مم`;
+  $('g-title').textContent = pname(P);
+  $('g-count').textContent = `${TEMPLATES.length} ${t('قالباً')} · ${P.w}×${P.h} ${t('مم')}`;
   document.querySelectorAll('.tpl .th').forEach(t => t.style.setProperty('--ar', W + '/' + H));
   const chips = $('g-chips');
   const mk = (label, pal, sw) => { const c = document.createElement('button'); c.className = 'chip' + (pal === paletteFilter ? ' on' : ''); c.innerHTML = (sw ? `<i style="background:${sw}"></i>` : '') + label; c.onclick = () => { paletteFilter = pal; renderGallery(); }; chips.appendChild(c); };
-  chips.innerHTML = '<span class="lbl">اللون</span>'; mk('الكل', null);
-  PALETTES.forEach(p => mk(p.name, p.name, p.accent));
-  const styles = $('g-styles'); styles.innerHTML = '<span class="lbl">الستايل</span>';
+  chips.innerHTML = `<span class="lbl">${t('اللون')}</span>`; mk(t('الكل'), null);
+  PALETTES.forEach(p => mk(t(p.name), p.name, p.accent));
+  const styles = $('g-styles'); styles.innerHTML = `<span class="lbl">${t('الستايل')}</span>`;
   const mkS = (label, st) => { const c = document.createElement('button'); c.className = 'chip' + (st === styleFilter ? ' on' : ''); c.textContent = label; c.onclick = () => { styleFilter = st; renderGallery(); }; styles.appendChild(c); };
-  mkS('الكل', null); [...new Set(TEMPLATES.map(t => t.name))].forEach(n => mkS(n, n));
+  mkS(t('الكل'), null); [...new Set(TEMPLATES.map(x => x.name))].forEach(n => mkS(t(n), n));
   document.querySelectorAll('#g-grid .tpl:not(.blank):not(.ai):not(.up)').forEach(e => e.remove());
   const list = TEMPLATES.filter(t => (!paletteFilter || t.palette === paletteFilter) && (!styleFilter || t.name === styleFilter));
   const sc = new fabric.StaticCanvas(null, { width: W, height: H });
@@ -198,20 +199,20 @@ async function renderGallery() {
   const run = ++renderGallery.run;
   for (let i = 0; i < list.length; i++) {
     if (run !== renderGallery.run) return;
-    const t = list[i];
-    const { bg, objects } = t.build(W, H, B);
+    const t_ = list[i];
+    const { bg, objects } = t_.build(W, H, B);
     sc.clear(); sc.backgroundColor = bg; sc.add(...objects); sc.renderAll();
     const el = document.createElement('div');
     el.className = 'tpl';
-    el.innerHTML = `<div class="th" style="--ar:${W}/${H}"><img src="${sc.toDataURL({ multiplier: mult })}"></div><div class="n"><span>${t.name}</span><span><i style="background:${t.swatch[0]}"></i><i style="background:${t.swatch[1]}"></i></span></div>`;
-    el.onclick = () => openEditor(t);
+    el.innerHTML = `<div class="th" style="--ar:${W}/${H}"><img src="${sc.toDataURL({ multiplier: mult })}"></div><div class="n"><span>${t(t_.name)}</span><span><i style="background:${t_.swatch[0]}"></i><i style="background:${t_.swatch[1]}"></i></span></div>`;
+    el.onclick = () => openEditor(t_);
     $('g-grid').appendChild(el);
     if (i % 4 === 3) await new Promise(r => setTimeout(r, 0));
   }
 }
 renderGallery.run = 0;
 $('g-blank').onclick = () => openEditor(null);
-$('g-ai').onclick = () => toast('التصميم بالذكاء الاصطناعي: المرحلة القادمة ✨');
+$('g-ai').onclick = () => toast(t('التصميم بالذكاء الاصطناعي: المرحلة القادمة ✨'));
 $('g-upload').onclick = () => { $('a-importfile').dataset.fresh = '1'; $('a-importfile').click(); };
 
 // ---------- editor ----------
@@ -252,26 +253,26 @@ async function openEditor(tpl) {
   await fontsReady();
   show('editor');
   initCanvas();
-  $('t-name').textContent = P.name + (tpl ? ' — ' + tpl.name : '');
-  $('t-size').textContent = `${P.w}×${P.h} مم + ${P.bleed} مم bleed`;
+  $('t-name').textContent = pname(P) + (tpl ? ' — ' + t(tpl.name) : '');
+  $('t-size').textContent = `${P.w}×${P.h} ${t('مم')} + ${P.bleed} ${t('مم')} bleed`;
   $('legend-fold').classList.toggle('hidden', !P.folds);
   sides = Array.from({ length: P.sides }, () => null);
   side = 0; history = []; redoStack = []; backManual = false; currentTpl = tpl;
   loading = true; canvas.clear(); canvas.backgroundColor = '#fff'; canvas.renderAll(); loading = false;
   if (!$('f-fields').children.length) renderForm($('f-fields'), scheduleRebuild);
-  syncForms(); renderPaletteChips();
+  syncForms(); renderPaletteChips(); translateDOM($('editor'));
   setMode(!!tpl);
   if (tpl) rebuild(); else pushHistory();
   renderSideButtons(); fit();
 }
 $('a-advanced').onclick = () => setMode(false);
-$('a-simple').onclick = () => { if (confirm('الرجوع للوضع البسيط يعيد بناء التصميم من بياناتك ويلغي التعديلات اليدوية. متابعة؟')) { backManual = false; setMode(true); rebuild(); } };
+$('a-simple').onclick = () => { if (confirm(t('الرجوع للوضع البسيط يعيد بناء التصميم من بياناتك ويلغي التعديلات اليدوية. متابعة؟'))) { backManual = false; setMode(true); rebuild(); } };
 
 function renderSideButtons() {
   const el = $('t-sides'); el.innerHTML = '';
   if (P.sides < 2) return;
   ['الوجه الأمامي', 'الوجه الخلفي'].forEach((n, i) => {
-    const b = document.createElement('button'); b.textContent = n; b.className = i === side ? 'on' : '';
+    const b = document.createElement('button'); b.textContent = t(n); b.className = i === side ? 'on' : '';
     b.onclick = () => switchSide(i); el.appendChild(b);
   });
 }
@@ -302,12 +303,12 @@ $('t-undo').onclick = undo; $('t-redo').onclick = redo; $('t-fit').onclick = fit
 // ---------- add tools ----------
 const centerAdd = obj => { canvas.add(obj); obj.center(); obj.setCoords(); canvas.setActiveObject(obj); canvas.renderAll(); };
 const U = Math.min(W, H) / 100;
-$('a-heading').onclick = () => centerAdd(new fabric.Textbox('عنوان', { fontFamily: 'Cairo', fontSize: 10 * U, fontWeight: 700, direction: 'rtl', textAlign: 'right', width: W * 0.5, fill: '#111' }));
-$('a-text').onclick = () => centerAdd(new fabric.Textbox('نص جديد', { fontFamily: 'Cairo', fontSize: 4.5 * U, direction: 'rtl', textAlign: 'right', width: W * 0.4, fill: '#333' }));
+$('a-heading').onclick = () => centerAdd(new fabric.Textbox(t('عنوان'), { fontFamily: 'Cairo', fontSize: 10 * U, fontWeight: 700, direction: 'rtl', textAlign: 'right', width: W * 0.5, fill: '#111' }));
+$('a-text').onclick = () => centerAdd(new fabric.Textbox(t('نص جديد'), { fontFamily: 'Cairo', fontSize: 4.5 * U, direction: 'rtl', textAlign: 'right', width: W * 0.4, fill: '#333' }));
 $('a-rect').onclick = () => centerAdd(new fabric.Rect({ width: W * 0.3, height: H * 0.3, fill: '#4f46e5' }));
 $('a-circle').onclick = () => centerAdd(new fabric.Circle({ radius: 15 * U, fill: '#c9a227' }));
 $('a-line').onclick = () => centerAdd(new fabric.Rect({ width: W * 0.3, height: 0.8 * U, fill: '#111' }));
-$('a-image').onclick = () => { if (simpleMode && currentTpl) $('f-fields').querySelector('[data-media=logoImg]').click(); else $('a-file').click(); };
+$('a-image').onclick = () => openUpload(simpleMode && currentTpl ? 'logo' : 'image');
 $('a-file').onchange = e => { const f = e.target.files[0]; if (f) addImage(URL.createObjectURL(f)); e.target.value = ''; };
 $('a-bg').onclick = () => { $('a-bgcolor').value = toHex(canvas.backgroundColor); $('a-bgcolor').click(); };
 $('a-bgcolor').oninput = e => { canvas.backgroundColor = e.target.value; canvas.renderAll(); };
@@ -315,8 +316,8 @@ $('a-bgcolor').onchange = pushHistory;
 $('a-font').onclick = () => $('a-fontfile').click();
 $('a-fontfile').onchange = async e => {
   busy(true);
-  try { for (const f of e.target.files) { const n = await uploadFont(f); toast('تمت إضافة الخط: ' + n); $('p-font').value = n; const o = canvas.getActiveObject(); if (o && o.fontFamily) { o.set('fontFamily', n); canvas.renderAll(); } } }
-  catch (err) { toast('فشل رفع الخط: ' + err.message); }
+  try { for (const f of e.target.files) { const n = await uploadFont(f); toast(t('تمت إضافة الخط: ') + n); $('p-font').value = n; const o = canvas.getActiveObject(); if (o && o.fontFamily) { o.set('fontFamily', n); canvas.renderAll(); } } }
+  catch (err) { toast(t('فشل رفع الخط: ') + err.message); }
   busy(false); e.target.value = '';
 };
 $('a-import').onclick = () => { $('a-importfile').dataset.fresh = ''; $('a-importfile').click(); };
@@ -331,7 +332,7 @@ function addImage(url) {
   const ph = canvas.getActiveObject();
   const isPh = ph && ph.data && ph.data.placeholder;
   fabric.Image.fromURL(url, img => {
-    if (!img.width) return toast('تعذّر تحميل الصورة');
+    if (!img.width) return toast(t('تعذّر تحميل الصورة'));
     if (isPh) {   // fill the placeholder frame (cover + crop)
       const bw = ph.getScaledWidth(), bh = ph.getScaledHeight();
       const s = Math.max(bw / img.width, bh / img.height), cw = bw / s, ch = bh / s;
@@ -347,7 +348,7 @@ function addImage(url) {
 // ---------- import PDF / AI (PDF-compatible) as editable background pages ----------
 // ponytail: rasterised at ~300dpi, not vector; good enough for print and for editing on top.
 async function importPdf(file) {
-  if (!window.pdfjsLib) return toast('مكتبة PDF غير محمّلة');
+  if (!window.pdfjsLib) return toast(t('مكتبة PDF غير محمّلة'));
   busy(true);
   try {
     const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
@@ -370,29 +371,64 @@ async function importPdf(file) {
     }
     if (side !== startSide) await switchSide(startSide);
     canvas.renderAll();
-    toast(`تم استيراد ${pages} صفحة من ${file.name}`);
+    toast(LANG === 'en' ? `Imported ${pages} page(s) from ${file.name}` : `تم استيراد ${pages} صفحة من ${file.name}`);
   } catch (err) {
     console.error(err);
-    toast(/\.ai$/i.test(file.name) ? 'ملف AI غير متوافق مع PDF. احفظه من Illustrator مع خيار "Create PDF Compatible File"' : 'تعذّر قراءة الملف: ' + err.message);
+    toast(/\.ai$/i.test(file.name) ? t('ملف AI غير متوافق مع PDF. احفظه من Illustrator مع خيار "Create PDF Compatible File"') : t('تعذّر قراءة الملف: ') + err.message);
   }
   busy(false);
 }
 
-// ---------- QR upload from phone ----------
+// ---------- upload modal (device / phone QR / drag-drop) + QR broadcast ----------
 const session = uuid();
-let qrMade = false;
-sb.channel('upload:' + session).on('broadcast', { event: 'image' }, async ({ payload }) => {
-  $('m-qr').classList.add('hidden'); toast('وصلت الصورة من الجوال ✓');
+const UPLOADS = [];   // { url, name } newest first (session only)
+let uploadKind = 'image', qrMade = false;
+function openUpload(kind) {
+  uploadKind = kind;
+  $('u-title').textContent = t(kind === 'logo' ? 'ارفع شعارك' : kind === 'photo' ? 'ارفع صورتك' : 'ارفع صورتك');
+  $('u-qr').classList.add('hidden'); $('u-actions').classList.remove('hidden');
+  renderUploads(); $('m-upload').classList.remove('hidden');
+}
+function renderUploads() {
+  const list = $('u-list'); list.innerHTML = '';
+  $('u-empty').classList.toggle('hidden', UPLOADS.length > 0);
+  UPLOADS.forEach(u => {
+    const el = document.createElement('div'); el.className = 'u-item'; el.title = t('استخدام');
+    el.innerHTML = `<div class="im"><img src="${u.url}"></div><small>${u.name}</small>`;
+    el.onclick = () => useUpload(u); list.appendChild(el);
+  });
+}
+async function useUpload(u) {
+  $('m-upload').classList.add('hidden');
   if (simpleMode && currentTpl) {
-    const hasFrame = canvas.getObjects().some(o => o.data && (o.data.placeholder || o.data.photo));
-    S[hasFrame ? 'photoImg' : 'logoImg'] = await urlToImage(payload.url); syncForms(); rebuild(); renderForm($('f-fields'), scheduleRebuild);
-  } else addImage(payload.url);
-}).subscribe();
-$('a-qr').onclick = () => {
+    let kind = uploadKind;
+    if (kind === 'image') kind = canvas.getObjects().some(o => o.data && (o.data.placeholder || o.data.photo)) ? 'photo' : 'logo';
+    S[kind === 'photo' ? 'photoImg' : 'logoImg'] = await urlToImage(u.url);
+    syncForms(); rebuild(); renderForm($('f-fields'), scheduleRebuild); translateDOM($('f-fields'));
+  } else addImage(u.url);
+}
+function addUpload(url, name, use) { UPLOADS.unshift({ url, name }); renderUploads(); if (use) useUpload(UPLOADS[0]); }
+const readAsDataURL = f => new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); });
+async function filesPicked(files) { const arr = [...files].filter(f => f.type.startsWith('image/')); for (let i = 0; i < arr.length; i++) addUpload(await readAsDataURL(arr[i]), arr[i].name, i === 0); }
+$('u-close').onclick = () => $('m-upload').classList.add('hidden');
+$('u-device').onclick = () => $('u-file').click();
+$('u-file').onchange = e => { filesPicked(e.target.files); e.target.value = ''; };
+$('u-phone').onclick = () => {
   const url = new URL('upload.html?s=' + session, location.href).href;
-  if (!qrMade) { new QRCode($('qr'), { text: url, width: 220, height: 220 }); $('qr-url').textContent = url; qrMade = true; }
-  $('m-qr').classList.remove('hidden');
+  if (!qrMade) { new QRCode($('qr'), { text: url, width: 200, height: 200 }); $('qr-url').textContent = url; qrMade = true; }
+  $('u-actions').classList.add('hidden'); $('u-qr').classList.remove('hidden');
 };
+const zone = $('u-zone');
+['dragenter', 'dragover'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.remove('over'); }));
+zone.addEventListener('drop', e => filesPicked(e.dataTransfer.files));
+sb.channel('upload:' + session).on('broadcast', { event: 'image' }, ({ payload }) => {
+  toast(t('وصلت الصورة من الجوال ✓'));
+  const open = !$('m-upload').classList.contains('hidden');
+  addUpload(payload.url, t('من الجوال'), true);
+  if (open) $('m-upload').classList.add('hidden');
+}).subscribe();
+$('a-qr').onclick = () => { openUpload(simpleMode && currentTpl ? 'logo' : 'image'); $('u-phone').click(); };
 
 // ---------- properties ----------
 const toHex = c => { if (!c || typeof c !== 'string') return '#000000'; if (c[0] === '#') return c.length === 4 ? '#' + [...c.slice(1)].map(x => x + x).join('') : c.slice(0, 7); const m = c.match(/\d+/g); return m ? '#' + m.slice(0, 3).map(n => (+n).toString(16).padStart(2, '0')).join('') : '#000000'; };
@@ -470,29 +506,33 @@ async function saveDesign({ isTemplate = false, name = null } = {}) {
     const ins = await sb.from('designer_designs').insert({ id, product: productKey, data, preview_url, is_template: isTemplate, name });
     if (ins.error) throw ins.error;
     const url = new URL(`?product=${productKey}&design=${id}`, location.href).href;
-    $('s-title').textContent = isTemplate ? 'تم حفظ القالب ✓' : 'تم حفظ التصميم ✓';
-    $('s-hint').textContent = isTemplate ? 'سيظهر في معرض هذا المنتج ضمن "قوالب المطبعة المرفوعة"' : 'انسخ رقم التصميم وضعه في ملاحظات الطلب، أو شارك الرابط مع المطبعة';
+    $('s-title').textContent = t(isTemplate ? 'تم حفظ القالب ✓' : 'تم حفظ التصميم ✓');
+    $('s-hint').textContent = t(isTemplate ? 'سيظهر في معرض هذا المنتج ضمن "قوالب المطبعة المرفوعة"' : 'انسخ رقم التصميم وضعه في ملاحظات الطلب، أو شارك الرابط مع المطبعة');
     $('s-id').textContent = id; $('s-url').textContent = url;
-    $('s-copy').onclick = () => { navigator.clipboard.writeText(url); toast('تم النسخ'); };
+    $('s-copy').onclick = () => { navigator.clipboard.writeText(url); toast(t('تم النسخ')); };
     $('m-saved').classList.remove('hidden');
     if (isTemplate) renderMine();
-  } catch (e) { toast('فشل الحفظ: ' + e.message); }
+  } catch (e) { toast(t('فشل الحفظ: ') + e.message); }
   busy(false);
 }
 $('t-save').onclick = () => saveDesign();
-$('t-template').onclick = () => { const name = prompt('اسم القالب كما سيظهر في المعرض:', P.name + ' — قالب المطبعة'); if (name !== null) saveDesign({ isTemplate: true, name: name.trim() || null }); };
+$('t-template').onclick = () => { const name = prompt(t('اسم القالب كما سيظهر في المعرض:'), pname(P) + t(' — قالب المطبعة')); if (name !== null) saveDesign({ isTemplate: true, name: name.trim() || null }); };
 
 async function loadDesign(id, asTemplate = false) {
   const { data, error } = await sb.from('designer_designs').select('data,name').eq('id', id).single();
-  if (error || !data) return toast('التصميم غير موجود');
+  if (error || !data) return toast(t('التصميم غير موجود'));
   await openEditor(null);
   backManual = true;
   sides = data.data.sides.map(JSON.stringify);
   await loadJSON(sides[0]); history = []; pushHistory();
-  $('t-name').textContent = P.name + ' — ' + (asTemplate ? (data.name || 'قالب المطبعة') : 'تصميم محفوظ');
+  $('t-name').textContent = pname(P) + ' — ' + (asTemplate ? (data.name || t('قالب المطبعة')) : t('تصميم محفوظ'));
 }
 
-$('t-back').onclick = () => { if (confirm('الرجوع للقوالب؟ التعديلات غير المحفوظة ستضيع.')) show('gallery'); };
+$('t-back').onclick = () => { if (confirm(t('الرجوع للقوالب؟ التعديلات غير المحفوظة ستضيع.'))) show('gallery'); };
+
+// ---------- language ----------
+document.querySelectorAll('.lang-toggle').forEach(b => { b.textContent = LANG === 'en' ? 'عربي' : 'EN'; b.onclick = () => setLang(LANG === 'en' ? 'ar' : 'en'); });
+translateDOM();
 
 // ---------- boot ----------
 if (!productKey) { show('catalog'); renderCatalog(); }

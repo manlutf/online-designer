@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>رفع صورة</title>
+<title>رفع صورة · Upload</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <style>
   body{margin:0;font-family:Cairo,sans-serif;background:#f4f5f7;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}
   .card{background:#fff;border-radius:16px;padding:28px 20px;max-width:380px;width:100%;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.08)}
   h1{font-size:20px;margin:0 0 8px}
   p{color:#666;margin:0 0 20px;font-size:14px}
-  label{display:block;background:#2563eb;color:#fff;padding:16px;border-radius:12px;font-size:18px;font-weight:700;cursor:pointer}
+  label{display:block;background:#1f42ee;color:#fff;padding:16px;border-radius:12px;font-size:18px;font-weight:700;cursor:pointer}
   input{display:none}
   #status{margin-top:16px;font-size:15px;min-height:24px}
   .ok{color:#16a34a}.err{color:#dc2626}
@@ -19,9 +19,9 @@
 </head>
 <body>
 <div class="card">
-  <h1>ارفع صورة للتصميم</h1>
-  <p>اختر صورة من الجوال أو صوّر الآن، وستظهر مباشرة على الشاشة</p>
-  <label for="f">📷 اختيار / تصوير</label>
+  <h1>ارفع صورة للتصميم <span style="color:#666;font-weight:400;font-size:14px;display:block">Upload a photo for your design</span></h1>
+  <p>اختر صورة من الجوال أو صوّر الآن، وستظهر مباشرة على الشاشة<br><span style="font-size:12px">Pick a photo or take one; it appears on the screen instantly</span></p>
+  <label for="f">📷 اختيار / تصوير · Choose / Camera</label>
   <input id="f" type="file" accept="image/*" multiple>
   <div id="status"></div>
   <div id="preview"></div>
@@ -40,7 +40,7 @@
 
   document.getElementById('f').addEventListener('change', async e => {
     for (const file of e.target.files) {
-      status.textContent = 'جاري الرفع…';
+      status.textContent = 'جاري الرفع… Uploading…';
       const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
       const path = `uploads/${session}/${Date.now()}.${ext}`;
       const { error } = await sb.storage.from(BUCKET).upload(path, file, { contentType: file.type });
@@ -48,7 +48,7 @@
       const url = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
       if (!ready) await new Promise(r => setTimeout(r, 800));
       await channel.send({ type: 'broadcast', event: 'image', payload: { url } });
-      status.innerHTML = '<span class="ok">✓ تم — الصورة ظهرت على الشاشة</span>';
+      status.innerHTML = '<span class="ok">✓ تم — الصورة ظهرت على الشاشة · Done, it is on the screen</span>';
       document.getElementById('preview').innerHTML = `<img src="${url}">`;
     }
   });

@@ -26,7 +26,7 @@ const { MM, B, W, H } = dims(P);
 const SAFE = 3 * MM;
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = id => document.getElementById(id);
-const FONTS = ['Cairo', 'Tajawal', 'Almarai', 'Amiri', 'Poppins', 'Montserrat', 'Playfair Display'];
+const FONTS = ['Cairo', 'Tajawal', 'Almarai', 'Amiri', 'Poppins', 'Montserrat', 'Playfair Display', 'Aref Ruqaa', 'Great Vibes'];
 const JSON_PROPS = ['data'];
 if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 

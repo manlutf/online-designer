@@ -1318,6 +1318,344 @@ FAMILIES.poster.unshift(
   ] }; } },
 );
 
+// ===== Premium layer 2: every other product family (VistaPrint flyers / invitations / postcards / banners research) =====
+const _kit2 = kit;
+kit = function (W, H, b, p) {
+  const k = _kit2(W, H, b, p);
+  const { u, X, Y } = k;
+  const rnd = seed => () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
+  Object.assign(k, {
+    confetti(x, y, w, h, n, colors, seed = 7) {   // deterministic gold specks
+      const r = rnd(seed), items = [];
+      for (let i = 0; i < n; i++) { const s = (0.5 + r() * 1.2) * u; items.push(new fabric.Circle({ left: r() * X(w), top: r() * Y(h), radius: s, fill: colors[i % colors.length], opacity: 0.55 + r() * 0.45 })); }
+      return new fabric.Group(items, { left: X(x), top: Y(y) });
+    },
+    qr(x, y, size, fg, bg, seed = 3) {   // QR-looking placeholder block (replaced by a real QR at order time)
+      const n = 21, cell = size * u / n, r = rnd(seed), items = [new fabric.Rect({ left: 0, top: 0, width: size * u, height: size * u, fill: bg })];
+      const finder = (cx, cy) => { items.push(new fabric.Rect({ left: cx * cell, top: cy * cell, width: 7 * cell, height: 7 * cell, fill: fg }), new fabric.Rect({ left: (cx + 1) * cell, top: (cy + 1) * cell, width: 5 * cell, height: 5 * cell, fill: bg }), new fabric.Rect({ left: (cx + 2) * cell, top: (cy + 2) * cell, width: 3 * cell, height: 3 * cell, fill: fg })); };
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { const inF = (i < 8 && j < 8) || (i < 8 && j > n - 9) || (i > n - 9 && j < 8); if (!inF && r() > 0.55) items.push(new fabric.Rect({ left: j * cell, top: i * cell, width: cell, height: cell, fill: fg })); }
+      finder(0, 0); finder(n - 7, 0); finder(0, n - 7);
+      return new fabric.Group(items, { left: X(x), top: Y(y), data: { qr: true } });
+    },
+    collage(x, y, w, h, cols, rows, gap = 1.2) {   // grid of photo frames
+      const out = [], gw = (w - gap * (cols - 1) * u / W * 100) / cols, gh = (h - gap * (rows - 1) * u / H * 100) / rows;
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) out.push(k.img(x + c * (gw + gap * u / W * 100), y + r * (gh + gap * u / H * 100), gw, gh));
+      return out;
+    },
+    wreath(cx, cy, r, fill, n = 14, seed = 5) {   // ring of leaves (botanical wreath)
+      const items = [], rr = rnd(seed);
+      for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2, lx = Math.cos(a) * r * u, ly = Math.sin(a) * r * u; const leaf = new fabric.Path(ICONS.leaf, { fill, opacity: 0.75 + rr() * 0.25, originX: 'center', originY: 'center' }); const sc = (0.62 + rr() * 0.16) * r * u / 100; leaf.set({ scaleX: sc, scaleY: sc, left: lx, top: ly, angle: a * 180 / Math.PI + 90 }); items.push(leaf); }
+      return new fabric.Group(items, { left: X(cx) - r * u * 1.15, top: Y(cy) - r * u * 1.15 });
+    },
+    script(text, o = {}) { return k.txt(text, { font: 'Aref Ruqaa', ...o }); },
+    scriptEn(text, o = {}) { return k.en(text, { font: 'Great Vibes', ...o }); },
+  });
+  return k;
+};
+
+// ---------- flyers / posters ----------
+FAMILIES.poster.unshift(
+  { name: 'كولاج صور', fn: k => { const { p, mx } = k; return { bg: p.bg, objects: [
+    ...k.collage(0, 0, 100, 44, 3, 1, 0.8),
+    k.rect(mx, 38, 100 - 2 * mx, 24, '#fff', { shadow: k.sh('rgba(0,0,0,.14)', 6, 2) }),
+    k.txt(S.company, { x: mx + 3, y: 41, w: 100 - 2 * mx - 6, s: 6.5, weight: 700, align: 'center' }),
+    k.txt(S.slogan, { x: mx + 3, y: 50, w: 100 - 2 * mx - 6, s: 3.6, fill: p.accent, align: 'center' }),
+    k.en(S.phone + '  ·  ' + S.web, { x: mx + 3, y: 56, w: 100 - 2 * mx - 6, s: 3, fill: p.sub, align: 'center' }),
+    k.txt(S.headline, { x: mx, y: 67, w: 100 - 2 * mx, s: 9, weight: 900, lines: 2 }),
+    k.txt(S.body, { x: mx, y: 79, w: 100 - 2 * mx, s: 3.6, fill: p.sub, lh: 1.5 }),
+    ...k.button(100 - mx - 30, 90, 30, 6, S.cta, p.accent, '#fff', 4.2),
+  ] }; } },
+  { name: 'عمود من نحن', fn: k => { const { p, mx } = k; return { bg: p.bg, objects: [
+    k.rect(50, 0, 50, 100, p.dark),
+    k.img(mx, 8, 44 - mx, 56),
+    k.en('&', { x: mx, y: 62, w: 44 - mx, s: 26, font: 'Playfair Display', fill: p.accent, align: 'center' }),
+    k.txt(S.company, { x: mx, y: 88, w: 44 - mx, s: 4.2, weight: 700, align: 'center' }),
+    k.txt('من نحن', { x: 54, y: 10, w: 42 - mx, s: 7, weight: 700, fill: '#fff' }),
+    k.hline(100 - mx - 12, 20, 12, 0.5, p.accent),
+    k.txt(S.body, { x: 54, y: 24, w: 42 - mx, s: 3.6, fill: '#e5e7eb', lh: 1.65 }),
+    ...S.bullets.map((b, i) => k.txt('✓  ' + b, { x: 54, y: 52 + i * 6, w: 42 - mx, s: 3.6, fill: '#fff' })),
+    ...k.contactRows(54, 78, 42 - mx, 3.1, '#e5e7eb', p.accent, 'right'),
+  ] }; } },
+  { name: 'إكليل الشكر', fn: k => { const { p, mx } = k; return { bg: p.bg, objects: [
+    k.wreath(50, 30, 20, p.accent, 16), k.wreath(50, 30, 20, p.dark, 8, 11),
+    k.script(S.headline, { x: mx, y: 22, w: 100 - 2 * mx, s: 10, fill: p.dark, align: 'center', lines: 2 }),
+    k.label(S.companyEn, { x: mx, y: 56, w: 100 - 2 * mx, align: 'center', fill: p.accent }),
+    k.txt(S.body, { x: mx + 8, y: 61, w: 100 - 2 * mx - 16, s: 3.8, fill: p.sub, align: 'center', lh: 1.6 }),
+    k.txt(S.date, { x: mx, y: 76, w: 100 - 2 * mx, s: 4.4, weight: 700, align: 'center' }),
+    k.txt(S.address, { x: mx, y: 82, w: 100 - 2 * mx, s: 3.4, fill: p.sub, align: 'center' }),
+    k.en(S.phone + '  ·  ' + S.web, { x: mx, y: 91, w: 100 - 2 * mx, s: 3.2, fill: p.sub, align: 'center' }),
+  ] }; } },
+  { name: 'كتلة العنوان', fn: k => { const { p, mx } = k; return { bg: p.bg, objects: [
+    k.rect(mx - 2, 6, 100 - 2 * mx + 4, 50, p.dark, { shadow: k.sh('rgba(0,0,0,.2)', 8, 3) }),
+    k.en('HEADLINE', { x: mx + 2, y: 11, w: 100 - 2 * mx - 4, s: 4, fill: p.accent, charSpacing: 400 }),
+    k.txt(S.headline, { x: mx + 2, y: 18, w: 100 - 2 * mx - 4, s: 11, weight: 900, fill: '#fff', align: 'left', lines: 3, lh: 1.1 }),
+    k.txt(S.sub, { x: mx + 2, y: 46, w: 100 - 2 * mx - 4, s: 3.8, fill: '#d1d5db', align: 'left' }),
+    k.label(S.companyEn, { x: mx, y: 62, w: 60 }),
+    k.txt(S.company, { x: mx, y: 66, w: 100 - 2 * mx, s: 6, weight: 700, align: 'left' }),
+    k.txt(S.body, { x: mx, y: 74, w: 100 - 2 * mx, s: 3.6, fill: p.sub, align: 'left', lh: 1.55 }),
+    ...k.contactRows(mx, 86, 55, 3.1, p.sub, p.accent, 'left'),
+    k.qr(100 - mx - 14, 84, 14, p.dark, '#fff'),
+  ] }; } },
+);
+
+// ---------- invitations ----------
+FAMILIES.invitation.unshift(
+  { name: 'صورة الذكرى', fn: k => { const { p, mx } = k; return { bg: p.bg, objects: [
+    k.img(0, 0, 100, 62),
+    k.label(S.inviteTitle === 'دعوة زفاف' ? 'Save the date' : 'Invitation', { x: mx, y: 66, w: 100 - 2 * mx, align: 'center', fill: p.accent }),
+    k.txt(S.couple, { x: mx, y: 71, w: 100 - 2 * mx, s: 10, font: 'Amiri', weight: 700, align: 'center' }),
+    k.txt(S.eventDate + '  ·  ' + S.eventTime, { x: mx, y: 84, w: 100 - 2 * mx, s: 3.8, fill: p.sub, align: 'center' }),
+    k.txt(S.eventPlace, { x: mx, y: 90, w: 100 - 2 * mx, s: 3.6, fill: p.sub, align: 'center' }),
+  ] }; } },
+  { name: 'جالا كحلي', fn: k => { const { p, mx, my } = k; return { bg: p.dark, objects: [
+    k.frame(mx - 2, my - 2, 100 - 2 * mx + 4, 100 - 2 * my + 4, p.accent, 0.25),
+    k.label('Please join us at', { x: mx, y: 20, w: 100 - 2 * mx, align: 'center', fill: '#cbd5e1' }),
+    k.script(S.inviteTitle, { x: mx, y: 26, w: 100 - 2 * mx, s: 12, fill: '#fff', align: 'center' }),
+    k.txt(S.couple, { x: mx, y: 45, w: 100 - 2 * mx, s: 7, font: 'Amiri', fill: p.accent, align: 'center' }),
+    k.hline(44, 56, 12, 0.3, p.accent),
+    k.txt(S.eventDate + '\n' + S.eventTime, { x: mx, y: 60, w: 100 - 2 * mx, s: 4, fill: '#e5e7eb', align: 'center', lh: 1.7 }),
+    k.txt(S.eventPlace, { x: mx, y: 76, w: 100 - 2 * mx, s: 4, fill: '#e5e7eb', align: 'center' }),
+    k.label('RSVP ' + S.phone, { x: mx, y: 88, w: 100 - 2 * mx, align: 'center', fill: '#94a3b8' }),
+  ] }; } },
+  { name: 'كونفيتي ذهبي', fn: k => { const { p, mx } = k; return { bg: '#fffdf8', objects: [
+    k.confetti(0, 0, 100, 22, 90, [p.accent, '#e9d8a6', p.dark], 3), k.confetti(0, 78, 100, 22, 90, [p.accent, '#e9d8a6', p.dark], 9),
+    k.scriptEn('Join us', { x: mx, y: 28, w: 100 - 2 * mx, s: 16, fill: p.dark, align: 'center' }),
+    k.script(S.inviteTitle, { x: mx, y: 46, w: 100 - 2 * mx, s: 8, fill: p.accent, align: 'center' }),
+    k.txt(S.couple, { x: mx, y: 56, w: 100 - 2 * mx, s: 7, font: 'Amiri', weight: 700, align: 'center' }),
+    k.txt(S.eventDate + '  ·  ' + S.eventTime, { x: mx, y: 67, w: 100 - 2 * mx, s: 3.8, fill: p.sub, align: 'center' }),
+    k.txt(S.eventPlace, { x: mx, y: 73, w: 100 - 2 * mx, s: 3.6, fill: p.sub, align: 'center' }),
+  ] }; } },
+  { name: 'حدث جريء', fn: k => { const { p, mx } = k; return { bg: p.dark, objects: [
+    k.label('Please join us at', { x: mx, y: 14, w: 100 - 2 * mx, align: 'center', fill: p.accent }),
+    k.txt(S.inviteTitle, { x: mx, y: 20, w: 100 - 2 * mx, s: 14, weight: 900, fill: '#fff', align: 'center', lines: 2, lh: 1.05 }),
+    k.txt(S.company, { x: mx, y: 42, w: 100 - 2 * mx, s: 4, fill: p.accent, align: 'center' }),
+    k.txt(S.eventDate, { x: mx, y: 52, w: 100 - 2 * mx, s: 8, weight: 900, fill: '#fff', align: 'center' }),
+    k.txt(S.eventTime, { x: mx, y: 62, w: 100 - 2 * mx, s: 6, weight: 700, fill: p.accent, align: 'center' }),
+    k.txt(S.eventPlace, { x: mx, y: 74, w: 100 - 2 * mx, s: 3.8, fill: '#e5e7eb', align: 'center' }),
+    k.en(S.phone, { x: mx, y: 86, w: 100 - 2 * mx, s: 3.4, fill: '#94a3b8', align: 'center' }),
+  ] }; } },
+  { name: 'أوراق داكنة', fn: k => { const { p, mx, my } = k; return { bg: '#14241f', objects: [
+    k.motif('leaf', -4, -2, 24, '#2f5d4a', { angle: -20 }), k.motif('leaf', 78, 80, 26, '#2f5d4a', { angle: 160 }), k.motif('leaf', 84, -4, 16, p.accent, { opacity: 0.9, angle: 30 }),
+    k.script(S.inviteTitle, { x: mx, y: 24, w: 100 - 2 * mx, s: 11, fill: '#fff', align: 'center' }),
+    k.txt(S.couple, { x: mx, y: 42, w: 100 - 2 * mx, s: 7.5, font: 'Amiri', fill: p.accent, align: 'center' }),
+    k.txt(S.inviteLine, { x: mx + 4, y: 54, w: 100 - 2 * mx - 8, s: 3.6, fill: '#d1d5db', align: 'center', lh: 1.6 }),
+    k.txt(S.eventDate + '  ·  ' + S.eventTime, { x: mx, y: 70, w: 100 - 2 * mx, s: 3.8, fill: '#fff', align: 'center' }),
+    k.txt(S.eventPlace, { x: mx, y: 77, w: 100 - 2 * mx, s: 3.6, fill: '#d1d5db', align: 'center' }),
+  ] }; } },
+);
+
+// ---------- roll-ups ----------
+FAMILIES.rollup.unshift(
+  { name: 'صورة وكود', fn: k => { const { p, mx } = k; return { bg: p.bg, objects: [
+    k.rect(0, 0, 100, 22, p.dark),
+    k.txt(S.headline, { x: mx, y: 5, w: 100 - 2 * mx, s: 11, weight: 900, fill: '#fff', lines: 2, lh: 1.1 }),
+    k.txt(S.sub, { x: mx, y: 16, w: 100 - 2 * mx, s: 5, fill: p.accent }),
+    k.img(0, 22, 100, 40),
+    k.txt(S.body, { x: mx, y: 65, w: 100 - 2 * mx, s: 4.6, fill: p.sub, lh: 1.5 }),
+    ...S.bullets.map((t, i) => k.txt('✓  ' + t, { x: mx, y: 73 + i * 4.2, w: 100 - 2 * mx, s: 4.6 })),
+    k.qr(mx, 86, 11, p.dark, '#fff'),
+    ...k.contactRows(mx + 14, 87, 60, 3.6, p.sub, p.accent, 'left', [['phone', S.phone], ['globe', S.web]]),
+  ] }; } },
+  { name: 'امسح الكود', fn: k => { const { p, mx } = k; return { bg: p.dark, objects: [
+    ...k.logoTile(50, 7, 7, p.accent, 'H'),
+    k.txt(S.company, { x: mx, y: 12, w: 100 - 2 * mx, s: 6.5, weight: 700, fill: '#fff', align: 'center' }),
+    k.rect(18, 24, 64, 30, '#fff', { rx: 2 * k.u, ry: 2 * k.u }), k.qr(22, 25.5, 56, p.dark, '#fff'),
+    k.en('SCAN ME', { x: mx, y: 58, w: 100 - 2 * mx, s: 12, weight: 700, fill: p.accent, align: 'center', charSpacing: 150 }),
+    k.txt(S.headline, { x: mx, y: 66, w: 100 - 2 * mx, s: 7, weight: 700, fill: '#fff', align: 'center' }),
+    k.txt(S.body, { x: mx + 6, y: 73, w: 100 - 2 * mx - 12, s: 4.2, fill: '#d1d5db', align: 'center', lh: 1.5 }),
+    k.rect(0, 88, 100, 12, p.accent),
+    k.en(S.web + '  ·  ' + S.phone, { x: mx, y: 92.5, w: 100 - 2 * mx, s: 4.4, fill: p.dark, align: 'center', weight: 700 }),
+  ] }; } },
+  { name: 'تخفيضات الموسم', fn: k => { const { p, mx } = k; return { bg: '#fbf6ee', objects: [
+    k.frame(mx - 2, 3, 100 - 2 * mx + 4, 94, p.dark, 0.3),
+    k.label(S.companyEn, { x: mx, y: 7, w: 100 - 2 * mx, align: 'center', fill: p.sub }),
+    k.txt(S.headline, { x: mx, y: 11, w: 100 - 2 * mx, s: 12, weight: 900, align: 'center', lines: 3, lh: 1.05 }),
+    k.motif('leaf', 30, 36, 14, p.accent, { angle: -30 }), k.motif('leaf', 44, 33, 16, p.dark), k.motif('leaf', 60, 36, 14, p.accent, { angle: 30 }),
+    k.txt(S.sub, { x: mx, y: 56, w: 100 - 2 * mx, s: 6, weight: 700, fill: p.accent, align: 'center' }),
+    k.img(mx + 8, 63, 100 - 2 * mx - 16, 20, { rx: 1 }),
+    k.txt(S.company, { x: mx, y: 86, w: 100 - 2 * mx, s: 5, weight: 700, align: 'center' }),
+    k.en(S.phone + '  ·  ' + S.web, { x: mx, y: 92, w: 100 - 2 * mx, s: 4, fill: p.sub, align: 'center' }),
+  ] }; } },
+);
+
+// ---------- menu ----------
+FAMILIES.menu.unshift(
+  { name: 'أطباق مصوّرة', fn: k => { const { p, mx } = k; const o = [
+    k.rect(0, 0, 100, 14, p.dark), k.txt(S.menuTitle, { x: mx, y: 3, w: 100 - 2 * mx, s: 7.5, weight: 700, fill: '#fff', align: 'center' }), k.txt(S.company, { x: mx, y: 10, w: 100 - 2 * mx, s: 2.8, fill: p.accent, align: 'center' })];
+    S.menu.slice(0, 6).forEach(([n, pr], i) => { const col = i % 2, row = Math.floor(i / 2), x = col ? mx : 51, w = 49 - mx, y = 18 + row * 24;
+      o.push(k.img(x, y, w, 13, { rx: 1 }), k.txt(n, { x, y: y + 14, w: w - 10, s: 3.6, weight: 700 }), k.en(pr, { x: x + w - 10, y: y + 14, w: 10, s: 3.6, fill: p.accent, weight: 700, align: 'right' }), k.txt('وصف قصير للصنف ومكوناته', { x, y: y + 18.5, w, s: 2.4, fill: p.sub })); });
+    o.push(k.rect(0, 92, 100, 8, p.accent), k.en(S.phone + '  ·  ' + S.web, { x: mx, y: 94.5, w: 100 - 2 * mx, s: 2.6, fill: '#fff', align: 'center' }));
+    return { bg: p.bg, objects: o }; } },
+  { name: 'شريط صور جانبي', fn: k => { const { p, mx } = k; const o = [k.img(0, 0, 30, 33), k.img(0, 33.5, 30, 33), k.img(0, 67, 30, 33),
+    k.txt(S.menuTitle, { x: 34, y: 6, w: 66 - mx, s: 7.5, weight: 700 }), k.hline(100 - mx - 14, 15, 14, 0.5, p.accent)];
+    S.menu.forEach(([n, pr], i) => { const y = 20 + i * 8.2; o.push(k.txt(n, { x: 50, y, w: 50 - mx, s: 3.8, weight: 700 }), k.en(pr, { x: 34, y, w: 12, s: 3.8, fill: p.accent, weight: 700 }), k.txt('وصف قصير للصنف', { x: 50, y: y + 4, w: 50 - mx, s: 2.4, fill: p.sub }), k.hline(34, y + 7.2, 66 - mx, 0.12, p.light)); });
+    o.push(...k.contactRows(34, 90, 60, 2.6, p.sub, p.accent, 'left', [['phone', S.phone], ['globe', S.web]]));
+    return { bg: p.bg, objects: o }; } },
+);
+
+// ---------- brochure ----------
+FAMILIES.brochure.unshift(
+  { name: 'كولاج الغلاف', fn: k => { const { p, my } = k; return { bg: p.bg, objects: [
+    k.img(66.7, 0, 33.3, 52), ...k.collage(66.7, 52.5, 33.3, 20, 2, 1, 0.6),
+    k.rect(66.7, 73, 33.3, 27, p.dark), k.txt(S.company, { x: 69, y: 76, w: 28, s: 6.5, weight: 700, fill: '#fff' }), k.txt(S.slogan, { x: 69, y: 88, w: 28, s: 3.6, fill: p.accent }),
+    k.txt('من نحن', { x: 36, y: my + 6, w: 28, s: 6, weight: 700 }), k.hline(55, my + 15, 9, 0.5, p.accent),
+    k.txt(S.body, { x: 36, y: my + 20, w: 28, s: 3.4, fill: p.sub, lh: 1.6 }),
+    ...S.bullets.map((t, i) => k.txt('✓  ' + t, { x: 36, y: 60 + i * 8, w: 28, s: 3.6 })),
+    k.txt('تواصل معنا', { x: 3, y: my + 6, w: 28, s: 6, weight: 700 }), k.hline(22, my + 15, 9, 0.5, p.accent),
+    ...k.contactRows(3, my + 22, 28, 3.2, p.sub, p.accent, 'right'),
+    k.txt(S.address, { x: 3, y: 58, w: 28, s: 3.2, fill: p.sub }), k.qr(3, 70, 14, p.dark, '#fff'),
+  ] }; } },
+  { name: 'موجة وشريط', fn: k => { const { p, my } = k; return { bg: p.bg, objects: [
+    k.rect(66.7, 0, 33.3, 100, p.light), k.img(66.7, 0, 33.3, 48),
+    ...k.ribbon(64, 44, 36, 10, p.accent, p.dark), k.txt(S.company, { x: 67, y: 46, w: 31, s: 5.5, weight: 700, fill: '#fff' }),
+    k.txt(S.slogan, { x: 69, y: 60, w: 28, s: 3.8, fill: p.sub, align: 'center' }), ...k.logoTile(83, 76, 7, p.dark, 'H'), k.en(S.web, { x: 69, y: 90, w: 28, s: 3.2, fill: p.sub, align: 'center' }),
+    k.txt('خدماتنا', { x: 36, y: my + 6, w: 28, s: 6, weight: 700, fill: p.accent }),
+    ...S.bullets.map((t, i) => k.txt('✓  ' + t, { x: 36, y: my + 18 + i * 9, w: 28, s: 3.6 })),
+    k.img(36, 58, 28, 30, { rx: 1 }),
+    k.txt('من نحن', { x: 3, y: my + 6, w: 28, s: 6, weight: 700, fill: p.accent }), k.txt(S.body, { x: 3, y: my + 18, w: 28, s: 3.4, fill: p.sub, lh: 1.6 }),
+    ...k.contactRows(3, 68, 28, 3.2, p.sub, p.accent, 'right'),
+  ] }; } },
+);
+
+// ---------- certificate ----------
+FAMILIES.certificate.unshift(
+  { name: 'ختم ذهبي', fn: k => { const { p, mx, my } = k; return { bg: '#fffdf7', objects: [
+    k.frame(mx - 3, my - 3, 100 - 2 * mx + 6, 100 - 2 * my + 6, p.dark, 0.9), k.frame(mx - 1, my - 1, 100 - 2 * mx + 2, 100 - 2 * my + 2, p.accent, 0.25),
+    k.hatch(mx - 3, my - 3, 100 - 2 * mx + 6, 100 - 2 * my + 6, 2.5, p.accent, 0.07, 0.2),
+    k.label(S.companyEn, { x: mx, y: my + 4, w: 100 - 2 * mx, align: 'center', fill: p.sub }),
+    k.txt(S.cert, { x: mx, y: my + 9, w: 100 - 2 * mx, s: 13, weight: 700, font: 'Amiri', align: 'center', fill: p.dark }),
+    k.txt(S.certTo, { x: mx, y: 38, w: 100 - 2 * mx, s: 4, fill: p.sub, align: 'center' }),
+    k.script(S.name, { x: mx, y: 43, w: 100 - 2 * mx, s: 11, fill: p.accent, align: 'center' }),
+    k.hline(30, 58, 40, 0.25, p.dark),
+    k.txt(S.certFor, { x: mx + 12, y: 61, w: 100 - 2 * mx - 24, s: 3.6, fill: p.sub, align: 'center', lh: 1.5 }),
+    k.star8(50, 83, 8, p.accent), k.star8(50, 83, 5.5, '#fffdf7'), k.star8(50, 83, 4, p.accent), ...k.ribbon(46, 86, 8, 8, p.accent, p.dark),
+    k.hline(68, 84, 18, 0.3, p.dark), k.txt(S.signer, { x: 66, y: 86, w: 22, s: 3.2, align: 'center' }),
+    k.hline(14, 84, 18, 0.3, p.dark), k.txt(S.signer2, { x: 12, y: 86, w: 22, s: 3.2, align: 'center' }),
+  ] }; } },
+  { name: 'شريط مصوّر', fn: k => { const { p, mx, my } = k; return { bg: p.bg, objects: [
+    k.img(0, 0, 100, 26), k.wave(26, 3, p.bg, false), k.rect(0, 29, 100, 0.6, p.accent),
+    k.txt(S.cert, { x: mx, y: 33, w: 100 - 2 * mx, s: 12, weight: 900, align: 'center' }),
+    k.txt(S.certTo, { x: mx, y: 47, w: 100 - 2 * mx, s: 4, fill: p.sub, align: 'center' }),
+    k.txt(S.name, { x: mx, y: 52, w: 100 - 2 * mx, s: 10, weight: 700, fill: p.accent, align: 'center' }),
+    k.txt(S.certFor, { x: mx + 12, y: 65, w: 100 - 2 * mx - 24, s: 3.6, fill: p.sub, align: 'center', lh: 1.5 }),
+    k.hline(66, 86, 18, 0.3, p.dark), k.txt(S.signer, { x: 64, y: 88, w: 22, s: 3.2, align: 'center' }),
+    k.hline(16, 86, 18, 0.3, p.dark), k.txt(S.signer2, { x: 14, y: 88, w: 22, s: 3.2, align: 'center' }),
+    ...k.logoTile(50, 86, 4, p.dark, 'H'),
+  ] }; } },
+);
+
+// ---------- voucher ----------
+FAMILIES.voucher.unshift(
+  { name: 'شريط ساتان', fn: k => { const { p, mx, my } = k; return { bg: p.bg, objects: [
+    k.img(0, 0, 40, 100),
+    ...k.ribbon(36, 18, 64, 18, p.accent, p.dark), k.txt(S.voucher, { x: 42, y: 21, w: 58 - mx, s: 9, weight: 700, fill: '#fff' }),
+    k.txt(S.amount, { x: 44, y: 42, w: 56 - mx, s: 14, weight: 900, fill: p.dark }),
+    k.txt(S.voucherNote, { x: 44, y: 68, w: 56 - mx, s: 3.4, fill: p.sub }),
+    k.en(S.code, { x: 44, y: 80, w: 30, s: 4, fill: p.accent, weight: 700 }), k.qr(100 - mx - 12, 74, 12, p.dark, '#fff'),
+  ] }; } },
+  { name: 'كونفيتي', fn: k => { const { p, mx, my } = k; return { bg: p.dark, objects: [
+    k.confetti(0, 0, 100, 100, 160, [p.accent, '#fff', '#e9d8a6'], 5),
+    k.rect(mx + 2, 14, 100 - 2 * mx - 4, 72, p.dark, { opacity: 0.85, rx: 2 * k.u, ry: 2 * k.u, stroke: p.accent, strokeWidth: 0.5 * k.u }),
+    k.scriptEn('Gift Voucher', { x: mx, y: 17, w: 100 - 2 * mx, s: 10, fill: p.accent, align: 'center' }),
+    k.txt(S.amount, { x: mx, y: 38, w: 100 - 2 * mx, s: 16, weight: 900, fill: '#fff', align: 'center' }),
+    k.txt(S.company, { x: mx, y: 62, w: 100 - 2 * mx, s: 4.4, fill: p.accent, align: 'center', weight: 700 }),
+    k.en(S.code + '  ·  ' + S.voucherNote.split('•')[0].trim(), { x: mx, y: 74, w: 100 - 2 * mx, s: 3.2, fill: '#d1d5db', align: 'center' }),
+  ] }; } },
+);
+
+// ---------- badge ----------
+FAMILIES.badge.unshift(
+  { name: 'موجة الرأس', fn: k => { const { p, mx } = k; return { bg: p.bg, objects: [
+    k.wave(26, 5, p.dark, true), k.wave(22, 5, p.accent, true, { opacity: 0.9 }),
+    k.txt(S.company, { x: mx, y: 6, w: 100 - 2 * mx, s: 6, weight: 700, fill: '#fff', align: 'center' }),
+    k.img(27, 30, 46, 29, { rx: 50 }),
+    k.txt(S.name, { x: mx, y: 63, w: 100 - 2 * mx, s: 7.5, weight: 700, align: 'center' }),
+    k.txt(S.role, { x: mx, y: 72, w: 100 - 2 * mx, s: 4.8, fill: p.accent, align: 'center' }),
+    k.label(S.dept, { x: mx, y: 80, w: 100 - 2 * mx, align: 'center', font: p.fontAr, charSpacing: 0 }),
+    k.qr(40, 86, 20, p.dark, '#fff'),
+  ] }; } },
+  { name: 'صورة كاملة', fn: k => { const { p, mx } = k; return { bg: p.dark, objects: [
+    k.img(0, 0, 100, 58), k.wave(58, 4, p.dark, false),
+    k.txt(S.name, { x: mx, y: 64, w: 100 - 2 * mx, s: 7.5, weight: 700, fill: '#fff', align: 'center' }),
+    k.txt(S.role, { x: mx, y: 73, w: 100 - 2 * mx, s: 4.8, fill: p.accent, align: 'center' }),
+    k.hline(35, 81, 30, 0.4, p.accent),
+    k.txt(S.company, { x: mx, y: 84, w: 100 - 2 * mx, s: 4.4, fill: '#e5e7eb', align: 'center' }),
+    k.en(S.idno, { x: mx, y: 91, w: 100 - 2 * mx, s: 3.6, fill: '#94a3b8', align: 'center' }),
+  ] }; } },
+);
+
+// ---------- postcard ----------
+FAMILIES.postcard.unshift(
+  { name: 'إكليل الشكر', fn: k => { const { p, mx } = k; return { bg: p.bg, objects: [
+    k.wreath(50, 40, 22, p.accent, 16, 4), k.wreath(50, 40, 22, p.dark, 8, 12),
+    k.script(S.thanks, { x: mx, y: 30, w: 100 - 2 * mx, s: 12, fill: p.dark, align: 'center' }),
+    k.label('Thank you for your business', { x: mx, y: 70, w: 100 - 2 * mx, align: 'center', fill: p.dark }),
+    k.txt(S.company, { x: mx, y: 78, w: 100 - 2 * mx, s: 4.2, weight: 700, fill: p.accent, align: 'center' }),
+    k.en(S.phone + '  ·  ' + S.web, { x: mx, y: 86, w: 100 - 2 * mx, s: 3.2, fill: p.sub, align: 'center' }),
+  ] }; } },
+  { name: 'كولاج', fn: k => { const { p, mx } = k; return { bg: p.bg, objects: [
+    ...k.collage(0, 0, 100, 58, 3, 1, 0.8),
+    k.rect(30, 50, 40, 36, '#fff', { shadow: k.sh('rgba(0,0,0,.16)', 6, 2) }),
+    k.txt(S.company, { x: 32, y: 56, w: 36, s: 5, weight: 700, align: 'center' }),
+    k.txt(S.slogan, { x: 32, y: 66, w: 36, s: 3.2, fill: p.accent, align: 'center' }),
+    k.en(S.phone, { x: 32, y: 74, w: 36, s: 3, fill: p.sub, align: 'center' }),
+    k.en(S.web, { x: mx, y: 92, w: 100 - 2 * mx, s: 3.2, fill: p.sub, align: 'center' }),
+  ] }; } },
+  { name: 'صورة وشريط', fn: k => { const { p, mx } = k; return { bg: p.bg, objects: [
+    k.img(0, 0, 100, 100), ...k.ribbon(-2, 62, 70, 16, p.accent, p.dark),
+    k.txt(S.thanks, { x: 2, y: 65, w: 62, s: 8, weight: 900, fill: '#fff' }),
+    k.txt(S.company + '  ·  ' + S.web, { x: 2, y: 82, w: 70, s: 3.4, fill: '#fff', weight: 700 }),
+  ] }; } },
+);
+
+// ---------- letterhead ----------
+FAMILIES.letterhead.unshift(
+  { name: 'موجة علوية', fn: k => { const { p, mx } = k; return { bg: '#fff', objects: [
+    k.wave(14, 3, p.dark, true), k.wave(12, 3, p.accent, true, { opacity: 0.9 }),
+    ...k.logoTile(100 - mx - 4, 5.5, 3.5, '#fff', 'H', p.dark),
+    k.txt(S.company, { x: mx, y: 3.5, w: 80, s: 4.5, weight: 700, fill: '#fff' }),
+    k.en(S.companyEn, { x: mx, y: 8, w: 80, s: 2.4, fill: '#ffffffcc', align: 'right', charSpacing: 200 }),
+    k.txt(S.letterSubject, { x: mx, y: 24, w: 100 - 2 * mx, s: 3.2, weight: 700 }),
+    k.txt(S.letterBody, { x: mx, y: 29, w: 100 - 2 * mx, s: 2.9, lh: 1.7 }),
+    k.hline(mx, 90, 100 - 2 * mx, 0.15, p.line || '#e5e7eb'),
+    ...k.contactRows(mx, 92, 50, 2.2, p.sub, p.accent, 'left'),
+    k.txt(S.address, { x: 55, y: 92, w: 45 - mx, s: 2.2, fill: p.sub }),
+  ] }; } },
+);
+
+// ---------- stickers ----------
+FAMILIES.sticker.unshift(
+  { name: 'ختم مزخرف', fn: k => { const { p } = k; return { bg: p.bg, objects: [
+    k.ring(50, 50, 44, p.dark, 1), k.ring(50, 50, 40, p.accent, 0.4), k.hatch(10, 10, 80, 80, 2.6, p.light, 1, 0.3),
+    k.star8(50, 50, 30, p.dark), k.star8(50, 50, 26, p.bg), k.star8(50, 50, 23, p.accent, { opacity: 0.15 }),
+    k.txt(S.company, { x: 15, y: 40, w: 70, s: 8, weight: 700, align: 'center' }),
+    k.label('Est. 2026', { x: 15, y: 55, w: 70, align: 'center', fill: p.accent }),
+  ] }; } },
+  { name: 'ورقة طبيعية', fn: k => { const { p } = k; return { bg: '#f3f0e6', objects: [
+    k.motif('leaf', 22, 8, 56, p.accent, { opacity: 0.25 }),
+    k.txt(S.company, { x: 12, y: 36, w: 76, s: 9, weight: 700, font: 'Amiri', align: 'center', fill: p.dark }),
+    k.txt(S.slogan, { x: 15, y: 54, w: 70, s: 4.4, fill: p.sub, align: 'center' }),
+    k.label('100% natural', { x: 15, y: 70, w: 70, align: 'center', fill: p.accent }),
+  ] }; } },
+);
+
+// ---------- mug / t-shirt ----------
+FAMILIES.mug.unshift(
+  { name: 'موجة', fn: k => { const { p } = k; return { bg: p.bg, objects: [
+    k.wave(55, 8, p.accent, false), k.wave(62, 8, p.dark, false, { opacity: 0.9 }),
+    k.txt(S.mug, { x: 8, y: 10, w: 84, s: 18, weight: 900, fill: p.dark, align: 'center' }),
+    k.txt(S.company, { x: 8, y: 74, w: 84, s: 5.5, fill: '#fff', align: 'center', weight: 700 }),
+  ] }; } },
+);
+FAMILIES.tshirt.unshift(
+  { name: 'شعار بأوراق', fn: k => { const { p } = k; return { bg: '#ffffff', objects: [
+    k.wreath(50, 40, 24, p.dark, 18, 6),
+    k.txt(S.company, { x: 10, y: 34, w: 80, s: 9, weight: 900, fill: p.dark, align: 'center' }),
+    k.label('Est. 2026', { x: 10, y: 48, w: 80, align: 'center', fill: p.accent }),
+    k.txt(S.slogan, { x: 10, y: 76, w: 80, s: 6, fill: p.sub, align: 'center' }),
+  ] }; } },
+);
+
 // Auto-generated back side for two-sided products: logo / company centred on the dark colour.
 function buildBack(W, H, b, p) {
   const k = kit(W, H, b, p);

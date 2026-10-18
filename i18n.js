@@ -51,6 +51,9 @@ const DICT = {
   'بعض الحقول ما زالت بالنص التجريبي': 'Some fields still contain the sample text', 'إخفاء هذه الحقول من التصميم': 'Hide these fields from the design', 'الكمية': 'Quantity', 'نوع الورق': 'Paper', 'عادي': 'Standard', 'مميز': 'Premium', 'مميز سميك': 'Premium plus',
   'راجعت التصميم وأوافق عليه': 'I have reviewed and approve my design', 'متابعة وحفظ': 'Continue & save', 'تعديل التصميم': 'Edit my design', 'الوجه الخلفي': 'Back side', 'تلقائي (الشعار)': 'Auto (logo)', 'نسخة من الأمامي': 'Duplicate front', 'فارغ': 'Blank', 'رفع تصميم': 'Upload design',
   'اضغط على الصورة لتغييرها': 'Click the photo to change it',
+  'كولاج صور': 'Photo collage', 'عمود من نحن': 'About-us column', 'إكليل الشكر': 'Thank-you wreath', 'كتلة العنوان': 'Headline block', 'صورة الذكرى': 'Memory photo', 'جالا كحلي': 'Navy gala', 'كونفيتي ذهبي': 'Gold confetti', 'حدث جريء': 'Bold event', 'أوراق داكنة': 'Dark foliage',
+  'صورة وكود': 'Photo & QR', 'امسح الكود': 'Scan me', 'تخفيضات الموسم': 'Season sale', 'أطباق مصوّرة': 'Photo dishes', 'شريط صور جانبي': 'Photo side strip', 'كولاج الغلاف': 'Cover collage', 'موجة وشريط': 'Wave & ribbon', 'ختم ذهبي': 'Gold seal', 'شريط مصوّر': 'Photo band',
+  'كونفيتي': 'Confetti', 'موجة الرأس': 'Header wave', 'كولاج': 'Collage', 'صورة وشريط': 'Photo & ribbon', 'موجة علوية': 'Top wave', 'ختم مزخرف': 'Ornate seal', 'ورقة طبيعية': 'Natural leaf', 'موجة': 'Wave', 'شعار بأوراق': 'Leaf emblem',
   // layout / style names
   'نظيف': 'Clean', 'شريط جانبي': 'Side band', 'شريط سفلي': 'Bottom bar', 'متوسط': 'Centred', 'زاوية': 'Corner', 'داكن فاخر': 'Dark luxe', 'قطري': 'Diagonal', 'دائرة': 'Circle', 'عصري ثنائي اللغة': 'Modern bilingual', 'كلاسيكي أنيق': 'Elegant classic',
   'رأس ملوّن': 'Coloured header', 'داكن': 'Dark', 'بسيط': 'Minimal', 'صورة علوية': 'Top photo', 'عنوان ضخم': 'Big headline', 'شريط قطري': 'Diagonal band', 'إطار أنيق': 'Elegant frame', 'عمود جانبي': 'Side column', 'شارة الخصم': 'Discount badge', 'شبكة صور': 'Photo grid',

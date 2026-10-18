@@ -98,7 +98,7 @@ async function renderCatalog() {
 }
 
 // ---------- simple mode: one form drives every template ----------
-let simpleMode = true, currentTpl = null, backManual = false, backMode = 'auto', rebuildTimer = null, galleryTimer = null;
+let simpleMode = true, currentTpl = null, backManual = false, backMode = 'auto', rebuildTimer = null, galleryTimer = null, viewMode = 'both';
 const fileToImage = file => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = r.result; }; r.readAsDataURL(file); });
 const urlToImage = url => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = rej; im.src = url; });
 
@@ -286,7 +286,7 @@ function initCanvas() {
 
 function fit() {
   const st = document.querySelector('.stage');
-  const two = P.sides > 1 && st.clientWidth > 700;
+  const two = P.sides > 1 && viewMode === 'both' && st.clientWidth > 700;
   const availW = two ? (st.clientWidth - 56 - 28) / 2 : st.clientWidth - 56;
   const z = Math.min(availW / W, (st.clientHeight - 56 - 24) / H, 3);
   if (!(z > 0)) return;
@@ -306,7 +306,7 @@ async function openEditor(tpl) {
   side = 0; history = []; redoStack = []; backManual = false; currentTpl = tpl;
   loading = true; canvas.clear(); canvas.backgroundColor = '#fff'; canvas.renderAll(); loading = false;
   if (!$('f-fields').children.length) renderForm($('f-fields'), scheduleRebuild);
-  backMode = 'auto'; syncForms(); renderPaletteChips(); renderBackModes(); translateDOM($('editor'));
+  backMode = 'auto'; viewMode = 'both'; syncForms(); renderPaletteChips(); renderBackModes(); translateDOM($('editor'));
   setMode(!!tpl);
   if (tpl) rebuild(); else pushHistory();
   renderSideButtons(); fit(); renderOtherSide();
@@ -317,9 +317,12 @@ $('a-simple').onclick = () => { if (confirm(t('الرجوع للوضع البس�
 function renderSideButtons() {
   const el = $('t-sides'); el.innerHTML = '';
   if (P.sides < 2) return;
+  const both = document.createElement('button'); both.textContent = t('الوجهان معاً'); both.className = viewMode === 'both' ? 'on' : '';
+  both.onclick = () => { viewMode = 'both'; renderSideButtons(); fit(); renderOtherSide(); };
+  el.appendChild(both);
   ['الوجه الأمامي', 'الوجه الخلفي'].forEach((n, i) => {
-    const b = document.createElement('button'); b.textContent = t(n); b.className = i === side ? 'on' : '';
-    b.onclick = () => switchSide(i); el.appendChild(b);
+    const b = document.createElement('button'); b.textContent = t(n); b.className = (viewMode === 'single' && i === side) ? 'on' : '';
+    b.onclick = () => { viewMode = 'single'; renderSideButtons(); fit(); renderOtherSide(); if (i !== side) switchSide(i); }; el.appendChild(b);
   });
 }
 
@@ -340,7 +343,7 @@ let otherSC = null, otherTimer = null;
 function renderOtherSide() {
   const card = $('side-other');
   $('side-active-label').textContent = P.sides > 1 ? t(side === 0 ? 'الوجه الأمامي' : 'الوجه الخلفي') : '';
-  if (P.sides < 2) { card.classList.add('hidden'); return; }
+  if (P.sides < 2 || viewMode !== 'both') { card.classList.add('hidden'); return; }
   card.classList.remove('hidden');
   const o = 1 - side;
   $('side-other-label').textContent = t(o === 0 ? 'الوجه الأمامي' : 'الوجه الخلفي') + ' · ' + t('اضغط للتعديل');

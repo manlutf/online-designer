@@ -286,9 +286,12 @@ function initCanvas() {
 
 function fit() {
   const st = document.querySelector('.stage');
-  const z = Math.min((st.clientWidth - 56) / W, (st.clientHeight - 56) / H, 3);
+  const two = P.sides > 1 && st.clientWidth > 700;
+  const availW = two ? (st.clientWidth - 56 - 28) / 2 : st.clientWidth - 56;
+  const z = Math.min(availW / W, (st.clientHeight - 56 - 24) / H, 3);
   if (!(z > 0)) return;
   canvas.setZoom(z); canvas.setDimensions({ width: W * z, height: H * z });
+  const img = $('side-img'); img.style.width = (W * z) + 'px'; img.style.height = (H * z) + 'px';
   $('t-zoom').textContent = Math.round(z * MM / 3.78 * 100) + '%';   // 100% = real print size on a 96dpi screen (3.78 px/mm)
 }
 
@@ -306,7 +309,7 @@ async function openEditor(tpl) {
   backMode = 'auto'; syncForms(); renderPaletteChips(); renderBackModes(); translateDOM($('editor'));
   setMode(!!tpl);
   if (tpl) rebuild(); else pushHistory();
-  renderSideButtons(); fit();
+  renderSideButtons(); fit(); renderOtherSide();
 }
 $('a-advanced').onclick = () => setMode(false);
 $('a-simple').onclick = () => { if (confirm(t('الرجوع للوضع البسيط يعيد بناء التصميم من بياناتك ويلغي التعديلات اليدوية. متابعة؟'))) { backManual = false; setMode(true); rebuild(); } };
@@ -328,9 +331,27 @@ async function switchSide(i) {
   if (i === side) return;
   sides[side] = snapshot(); side = i; history = []; redoStack = [];
   if (sides[i]) await loadJSON(sides[i]); else { loading = true; canvas.clear(); canvas.backgroundColor = '#fff'; canvas.renderAll(); loading = false; }
-  pushHistory(); renderSideButtons();
+  applyHotspots(); pushHistory(); renderSideButtons(); renderOtherSide();
 }
 function allSides() { sides[side] = snapshot(); return sides.map(s => s || JSON.stringify({ version: fabric.version, objects: [], background: '#fff' })); }
+
+// ---------- other side (live side-by-side preview) ----------
+let otherSC = null, otherTimer = null;
+function renderOtherSide() {
+  const card = $('side-other');
+  $('side-active-label').textContent = P.sides > 1 ? t(side === 0 ? 'الوجه الأمامي' : 'الوجه الخلفي') : '';
+  if (P.sides < 2) { card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  const o = 1 - side;
+  $('side-other-label').textContent = t(o === 0 ? 'الوجه الأمامي' : 'الوجه الخلفي') + ' · ' + t('اضغط للتعديل');
+  $('side-active').style.order = side; card.style.order = o;
+  otherSC = otherSC || new fabric.StaticCanvas(null, { width: W, height: H });
+  const json = sides[o] || JSON.stringify({ version: fabric.version, objects: [], background: '#fff' });
+  const z = Math.min(1, 900 / W);
+  otherSC.loadFromJSON(json, () => { otherSC.renderAll(); $('side-img').src = otherSC.toDataURL({ format: 'jpeg', quality: 0.85, multiplier: z }); });
+}
+const scheduleOther = () => { clearTimeout(otherTimer); otherTimer = setTimeout(renderOtherSide, 250); };
+$('side-other').onclick = () => switchSide(1 - side);
 
 // ---------- history ----------
 function pushHistory() {
@@ -338,6 +359,7 @@ function pushHistory() {
   const s = snapshot();
   if (history[history.length - 1] === s) return;
   history.push(s); if (history.length > 40) history.shift(); redoStack = [];
+  scheduleOther();
 }
 async function undo() { if (history.length < 2) return; redoStack.push(history.pop()); await loadJSON(history[history.length - 1]); }
 async function redo() { if (!redoStack.length) return; const s = redoStack.pop(); history.push(s); await loadJSON(s); }

@@ -131,7 +131,14 @@
   .tool svg.i{width:22px;height:22px}
   .rail .sep{height:1px;background:var(--line-2);margin:6px 8px}
   .stage{overflow:auto;display:flex;padding:28px;background:var(--bg)}
-  .stage .wrap{box-shadow:0 10px 30px rgba(17,24,39,.12);background:#fff;line-height:0;margin:auto;border-radius:2px}
+  .stage .wrap{box-shadow:0 10px 30px rgba(17,24,39,.12);background:#fff;line-height:0;border-radius:2px}
+  .sides{display:flex;gap:28px;align-items:flex-start;justify-content:center;flex-wrap:wrap;margin:auto}
+  .side-card{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .side-label{font-size:12px;font-weight:600;color:var(--ink-2);min-height:16px}
+  .side-card.other .wrap{cursor:pointer;opacity:.92;transition:var(--t)}
+  .side-card.other:hover .wrap{opacity:1;outline:2px solid var(--brand);outline-offset:3px}
+  .side-card.other .wrap img{display:block}
+  .side-card.other .side-label{color:var(--ink-3)}
   .props{background:var(--surface);border-inline-end:1px solid var(--line-2);padding:16px;overflow:auto;font-size:13px}
   .props h4{margin:0 0 12px;font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--ink-3);font-weight:500}
   .sec{padding:12px 0;border-top:1px solid var(--line)}
@@ -363,7 +370,10 @@
       <input id="a-fontfile" type="file" accept=".ttf,.otf,.woff,.woff2" multiple class="hidden">
       <input id="a-bgcolor" type="color" class="hidden">
     </div>
-    <div class="stage"><div class="wrap"><canvas id="c"></canvas></div></div>
+    <div class="stage"><div class="sides" id="sides">
+      <div class="side-card" id="side-active"><div class="side-label" id="side-active-label"></div><div class="wrap"><canvas id="c"></canvas></div></div>
+      <div class="side-card other hidden" id="side-other" title="اضغط للتعديل"><div class="side-label" id="side-other-label"></div><div class="wrap preview"><img id="side-img" alt=""></div></div>
+    </div></div>
     <div class="props">
       <div id="form-panel">
         <h4>بياناتك</h4>

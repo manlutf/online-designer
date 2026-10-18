@@ -91,9 +91,10 @@ python -m http.server 8765 --bind 0.0.0.0
 - جدول `designer_designs` (id, product, data, preview_url)
 - bucket عام `designer`: `uploads/` (صور الجوال)، `previews/` (معاينات)، `fonts/` (خطوط المطبعة)
 
-## النشر (GitHub Pages) — خطوة واحدة
-المستودع مهيأ محلياً (git) وحساب GitHub مسجّل الدخول. لنشر رابط عام (يلزم لتجربة QR من خارج الشبكة):
+## النشر (GitHub Pages)
+منشور على **https://manlutf.github.io/online-designer/** من مستودع `manlutf/online-designer` (فرع main، الجذر).
+أي تعديل يُنشر خلال دقيقة بعد:
 ```
-gh repo create online-designer --public --source . --remote origin --push && gh api -X POST repos/manlutf/online-designer/pages -f build_type=legacy -f "source[branch]=main" -f "source[path]=/"
+git add -A && git commit -m "update" && git push
 ```
-بعد دقيقة يصبح الرابط: https://manlutf.github.io/online-designer/  (وأي تعديل لاحق: `git add -A && git commit -m update && git push`)
+الرابط العام يعمل مع QR من أي جوال بدون شبكة محلية أو نفق.
